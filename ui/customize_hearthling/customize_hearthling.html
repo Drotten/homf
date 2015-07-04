@@ -1,0 +1,62 @@
+<script type="text/x-handlebars" data-template-name="customizeHearthling">
+   <div id="customizeHearthling" class="gui" style="display: none">
+      <div class="window">
+         <div class="title">
+            Customize your hearthling
+         </div>
+
+         <div>
+            <p><input id="hearthlingName" type="text" onClick="this.select();" value="" /></p>
+            <p id="nameLock" class="unlocked" />
+         </div>
+
+         <div>
+            <table>
+               <tr>
+                  <td id="maleButton" class="genderButton" />
+                  <td id="femaleButton" class="genderButton" />
+               </tr>
+            </table>
+            <p id="genderLock" class="unlocked" />
+         </div>
+
+         <div>
+            <table>
+               <tr class="visible" id="body">
+                  <td>Body</td>
+                  <td id="previousButton" class="changeBody" />
+                  <td id="bodyIndex" class="index" />
+                  <td id="nextButton" class="changeBody" />
+                  <td id="bodyLock" class="unlocked" />
+               </tr>
+               <tr class="visible" id="head">
+                  <td>Head</td>
+                  <td id="previousButton" class="changeHead" />
+                  <td id="headIndex" class="index" />
+                  <td id="nextButton" class="changeHead" />
+                  <td id="headLock" class="unlocked" />
+               </tr>
+               <tr class="visible" id="eyebrows">
+                  <td>Eyebrows</td>
+                  <td id="previousButton" class="changeEyebrows" />
+                  <td id="eyebrowsIndex" class="index" />
+                  <td id="nextButton" class="changeEyebrows" />
+                  <td id="eyebrowsLock" class="unlocked" />
+               </tr>
+               <tr class="visible" id="facialHair">
+                  <td>Facial hair</td>
+                  <td id="previousButton" class="changeFacialHair" />
+                  <td id="facialHairIndex" class="index" />
+                  <td id="nextButton" class="changeFacialHair" />
+                  <td id="facialHairLock" class="unlocked" />
+               </tr>
+            </table>
+         </div>
+
+         <td>
+            <p id="randomButton" />
+            <button class="ok" />
+         </td>
+      </div>
+   </div>
+</script>

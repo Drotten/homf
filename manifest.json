@@ -1,0 +1,104 @@
+{
+   "info":
+   {
+      "name"        : "Custom Hearthlings",
+      "description" : "Change your hearthlings' appearance to your preferences.",
+      "version"     : 1
+   },
+
+   "server_init_script" : "file(server_init)",
+
+   "functions":
+   {
+      "get_tracker":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "start_customization":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "randomize_hearthling":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "get_hearthling_name":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "set_hearthling_name":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint" : "server"
+      },
+      "next_body":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "next_head":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "next_eyebrows":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "next_facial":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "get_current_model_data":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+      "finished_customization":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
+
+      "move_to_hearthling":
+      {
+         "controller" : "file(call_handlers/hearthling_camera_call_handler.lua)",
+         "endpoint"   : "client"
+      },
+      "follow_hearthling":
+      {
+         "controller" : "file(call_handlers/hearthling_camera_call_handler.lua)",
+         "endpoint"   : "client"
+      },
+      "stop_follow":
+      {
+         "controller" : "file(call_handlers/hearthling_camera_call_handler.lua)",
+         "endpoint"   : "client"
+      }
+   },
+
+   "client_controllers":
+   {
+      "move_rotate_to_camera_controller" : "file(camera/move_rotate_to_camera_controller.lua)"
+   },
+
+   "ui":
+   {
+      "js": [
+         "file(ui/init.js)",
+         "file(ui/customize_hearthling/customize_hearthling.js)"
+      ],
+      "html": [
+         "file(ui/customize_hearthling/customize_hearthling.html)"
+      ],
+      "less": [
+         "file(ui/customize_hearthling/customize_hearthling.less)"
+      ]
+   }
+}
