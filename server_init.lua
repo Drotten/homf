@@ -1,5 +1,7 @@
 homf = {}
 
+homf.util = require('lib.util')
+
 local function create_service(name)
    local path = string.format('services.server.%s.%s_service', name, name)
    local service = require(path)()
@@ -19,7 +21,7 @@ local function create_service(name)
    radiant.events.trigger(homf.customizer, 'homf:initialized')
 end
 
-radiant.events.listen(homf, 'radiant:init', function()
+radiant.events.listen_once(homf, 'radiant:init', function()
    homf._sv = homf.__saved_variables:get_data()
    create_service('customizer')
 end)
