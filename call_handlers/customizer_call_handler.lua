@@ -2,15 +2,15 @@ local CustomizerCallHandler = class()
 local customizer = homf.customizer
 local datastore
 
-function CustomizerCallHandler:_update_datastore(e)
-   datastore:set_data({hearthling = e.hearthling})
+function CustomizerCallHandler:_update_datastore(args)
+   datastore:set_data({hearthling = args.hearthling})
 end
 
 function CustomizerCallHandler:get_tracker(session, response)
    if not datastore then
       datastore = radiant.create_datastore()
 
-      assert(customizer, 'the customizer service does not exist')
+      assert(customizer, 'HoMF: the customizer service does not exist')
       radiant.events.listen(customizer, 'homf:customize', self, self._update_datastore)
       radiant.events.trigger_async(customizer, 'homf:tracker_online')
    end
@@ -23,6 +23,10 @@ end
 
 function CustomizerCallHandler:randomize_hearthling(session, response, new_gender, locks)
    return customizer:randomize_hearthling(new_gender, locks)
+end
+
+function CustomizerCallHandler:next_role(session, response, is_next)
+   return customizer:next_role(is_next)
 end
 
 function CustomizerCallHandler:next_body(session, response, is_next)
@@ -53,8 +57,8 @@ function CustomizerCallHandler:get_current_model_data(session, response)
    return customizer:get_current_model_data()
 end
 
-function CustomizerCallHandler:finished_customization(session, response)
-   customizer:finished_customization()
+function CustomizerCallHandler:finish_customization(session, response)
+   customizer:finish_customization()
 end
 
 return CustomizerCallHandler

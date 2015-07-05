@@ -1,5 +1,4 @@
-local customize_hearthling = require('services.server.customizer.customize_hearthling')
-local CustomizerService = class()
+local CustomizerService   = class()
 
 function CustomizerService:__init()
 end
@@ -16,15 +15,17 @@ function CustomizerService:initialize()
          function()
             self._pop = stonehearth.population:get_population(self._sv.player_id)
             if self._sv.customizing_hearthling then
-               customize_hearthling:start_customization(true)
+               self._continue = true
                radiant.events.trigger_async(homf.customizer, 'homf:customize', {hearthling = self._sv.customizing_hearthling})
+
+               self._sv.customize_hearthling = radiant.create_controller('homf:customizer:customize_hearthling', self._sv.player_id)
             end
             self:_start_update_timer()
          end)
    else
       self._sv.initialized = true
       --TODO: need to get the right player_id at all times
-      self._sv.player_id = 'player_1'
+      self._sv.player_id              = 'player_1'
       self._sv.customized_hearthlings = {}
 
       self.__saved_variables:mark_changed()
@@ -35,6 +36,8 @@ function CustomizerService:initialize()
          function()
             self._pop = stonehearth.population:get_population(self._sv.player_id)
             self:_start_update_timer()
+
+            self._sv.customize_hearthling = radiant.create_controller('homf:customizer:customize_hearthling', self._sv.player_id)
          end)
    end
 end
@@ -64,8 +67,46 @@ function CustomizerService:force_customization(hearthling)
    self:_init_customization()
 end
 
-function CustomizerService:finished_customization()
-   assert(self._sv.customizing_hearthling, 'homf: Failed to finish customization')
+function CustomizerService:start_customization()
+   local hearthling_data = self._sv.customize_hearthling:start_customization(self._sv.customizing_hearthling, self._continue)
+   self._continue        = false
+   return hearthling_data
+end
+
+function CustomizerService:randomize_hearthling(new_gender, locks)
+   return self._sv.customize_hearthling:randomize_hearthling(new_gender, locks)
+end
+
+function CustomizerService:next_role(is_next)
+   return self._sv.customize_hearthling:next_role(is_next)
+end
+
+function CustomizerService:next_body(is_next)
+   return self._sv.customize_hearthling:next_body(is_next)
+end
+
+function CustomizerService:next_head(is_next)
+   return self._sv.customize_hearthling:next_head(is_next)
+end
+
+function CustomizerService:next_eyebrows(is_next)
+   return self._sv.customize_hearthling:next_eyebrows(is_next)
+end
+
+function CustomizerService:next_facial(is_next)
+   return self._sv.customize_hearthling:next_facial(is_next)
+end
+
+function CustomizerService:set_hearthling_name(name)
+   return self._sv.customize_hearthling:set_hearthling_name(name)
+end
+
+function CustomizerService:get_current_model_data()
+   return self._sv.customize_hearthling:get_current_model_data()
+end
+
+function CustomizerService:finish_customization()
+   assert(self._sv.customizing_hearthling, 'HoMF: Failed to finish customization')
 
    -- Post customization
    table.insert(self._sv.customized_hearthlings, self._sv.customizing_hearthling)
@@ -120,9 +161,9 @@ function CustomizerService:_get_unchecked_hearthling(hearthlings)
 end
 
 function CustomizerService:_update()
-   local hearthlings = {}
+   local hearthlings        = {}
    local hearthlings_length = 0
-   for _,hearthling in pairs(self._pop:get_hearthlings()) do
+   for _,hearthling in pairs(self._pop:get_citizens()) do
       hearthlings_length = hearthlings_length + 1
       table.insert(hearthlings, hearthling)
    end
@@ -153,12 +194,14 @@ function CustomizerService:_update()
    if #self._to_be_customized > 0 then
       self:_init_customization()
    end
-
-   self:_start_update_timer()
 end
 
 function CustomizerService:_start_update_timer(e)
-   radiant.set_realtime_timer(500, function() self:_update() end)
+   radiant.set_realtime_timer(500,
+      function()
+         self:_start_update_timer()
+         self:_update()
+      end)
 end
 
 return CustomizerService
