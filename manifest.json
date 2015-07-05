@@ -31,7 +31,6 @@
          "endpoint"   : "server"
       },
       "set_hearthling_name":
-
       {
          "controller" : "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"   : "server"
