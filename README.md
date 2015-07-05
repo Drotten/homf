@@ -1,8 +1,8 @@
-Hearthlings of the Many Faces
+Hearthlings of Many Faces
 ===
 
 With this little mod you're able to customize the looks and names of your hearthlings.  
-Now you can create an amazon village, make everyone be part of a huge family, create a village full of clones, name the shepherd after yourself, or whatever you come up with!  
+Now you can create an amazon village, make everyone be part of a huge family, create a village full of clones, or whatever you feel like!  
 
 ### How it works
 

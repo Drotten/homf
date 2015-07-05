@@ -1,3 +1,9 @@
+### Version 1.1
+
+- **Compatibility** - Made the mod compatible with Stonehearth Alpha 10.5.
+- **Feature** - The player can now change the role of the hearthling (though the human factions only has one role).
+
+
 ### Version 1.0.4a
 
 - **Technical** - Removed the Jelly requirement.
