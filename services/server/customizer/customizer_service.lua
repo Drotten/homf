@@ -196,8 +196,8 @@ function CustomizerService:_update()
    end
 end
 
-function CustomizerService:_start_update_timer(e)
-   radiant.set_realtime_timer(500,
+function CustomizerService:_start_update_timer()
+   radiant.set_realtime_timer('HOMFCustomizerService update', 500,
       function()
          self:_start_update_timer()
          self:_update()
