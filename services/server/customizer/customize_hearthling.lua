@@ -1,4 +1,4 @@
-local rng = _radiant.csg.get_default_rng()
+local rng = _radiant.math.get_default_rng()
 local CustomizeHearthling = class()
 
 function CustomizeHearthling:__init()
@@ -10,7 +10,7 @@ function CustomizeHearthling:initialize(player_id)
 end
 
 function CustomizeHearthling:start_customization(customizing_hearthling, continue)
-   -- Get all the model data if there is none already
+   -- Get all the model data if there are none
    if not self._data then
       self._roles  = {}
       self._bodies = {}
