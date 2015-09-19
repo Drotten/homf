@@ -103,7 +103,8 @@
       "js":
       [
          "file(ui/init.js)",
-         "file(ui/customize_hearthling/customize_hearthling.js)"
+         "file(ui/customize_hearthling/customize_hearthling.js)",
+         "file(ui/embark_customize/embark_customize.js)"
       ],
       "html":
       [
