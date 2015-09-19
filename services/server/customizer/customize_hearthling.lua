@@ -368,7 +368,7 @@ function CustomizeHearthling:get_hearthling_name()
    end
 
    if self._sv.customizing_hearthling then
-      name = radiant.entities.get_name(self._sv.customizing_hearthling)
+      name = radiant.entities.get_custom_name(self._sv.customizing_hearthling)
    end
 
    return name
