@@ -24,30 +24,30 @@ App.CustomizeHearthlingView = App.View.extend(
       var self = this;
 
       radiant.call('radiant:get_config', 'mods.homf').done(function(o)
-      {
-         var cfg = (o || {})['mods.homf'] || {};
+         {
+            var cfg = (o || {})['mods.homf'] || {};
 
-         self._pause_during_customization = cfg['pause_during_customization'];
-         if (self._pause_during_customization == null)
-            self._pause_during_customization = true;
+            self._pause_during_customization = cfg['pause_during_customization'];
+            if (self._pause_during_customization == null)
+               self._pause_during_customization = true;
 
-         self._zoom_to_hearthling = cfg['zoom_to_hearthling'];
-         if (self._zoom_to_hearthling == null)
-            self._zoom_to_hearthling = true;
-      });
+            self._zoom_to_hearthling = cfg['zoom_to_hearthling'];
+            if (self._zoom_to_hearthling == null)
+               self._zoom_to_hearthling = true;
+         });
 
       radiant.call('homf:get_tracker').done(function(response)
-      {
-         self.trace = radiant.trace(response.tracker)
-            .progress(function(data)
-            {
-               self.start_customization(data.hearthling);
-            })
-            .fail(function(e)
-            {
-               console.log(e);
-            });
-      });
+         {
+            self.trace = radiant.trace(response.tracker)
+               .progress(function(data)
+                  {
+                     self.start_customization(data.hearthling);
+                  })
+               .fail(function(e)
+                  {
+                     console.log(e);
+                  });
+         });
    },
 
    didInsertElement: function()
@@ -58,106 +58,106 @@ App.CustomizeHearthlingView = App.View.extend(
       this.$().draggable();
 
       this.$('#randomButton').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
+         {
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
 
-         self._randomize_hearthling(null);
-      });
+            self._randomize_hearthling(null);
+         });
 
       this.$('#hearthlingName').keypress(function(e)
-      {
-         radiant.call('homf:set_hearthling_name', self.$('#hearthlingName').val());
-      });
+         {
+            radiant.call('homf:set_hearthling_name', self.$('#hearthlingName').val());
+         });
 
       this.$('.changeRole').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-         radiant.call('homf:next_role', $(this).attr('id')=='nextButton').done(function(response)
          {
-            self.$('#hearthlingName').val(response.name);
-            radiant.call('homf:set_hearthling_name', response.name);
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
-            document.getElementById("roleIndex").innerHTML       = response.role;
-            document.getElementById("bodyIndex").innerHTML       = response.body;
-            document.getElementById("headIndex").innerHTML       = response.head;
-            document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
-            document.getElementById("facialHairIndex").innerHTML = response.facial;
+            radiant.call('homf:next_role', $(this).attr('id')=='nextButton').done(function(response)
+               {
+                  self.$('#hearthlingName').val(response.name);
+                  radiant.call('homf:set_hearthling_name', response.name);
 
-            self._set_visibility(response.gender);
+                  document.getElementById("roleIndex").innerHTML       = response.role;
+                  document.getElementById("bodyIndex").innerHTML       = response.body;
+                  document.getElementById("headIndex").innerHTML       = response.head;
+                  document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
+                  document.getElementById("facialHairIndex").innerHTML = response.facial;
+
+                  self._set_visibility(response.gender);
+               });
          });
-      });
 
       this.$('.genderButton').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+         {
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
-         var newGender = 'female';
-         if ($(this).attr('id') == 'maleButton')
-            newGender = 'male';
+            var newGender = 'female';
+            if ($(this).attr('id') == 'maleButton')
+               newGender = 'male';
 
-         self._randomize_hearthling(newGender);
-      });
+            self._randomize_hearthling(newGender);
+         });
 
       this.$('.changeBody').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-         radiant.call('homf:next_body', $(this).attr('id')=='nextButton').done(function(response)
          {
-            document.getElementById("bodyIndex").innerHTML       = response.body;
-            document.getElementById("headIndex").innerHTML       = response.head;
-            document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
-            document.getElementById("facialHairIndex").innerHTML = response.facial;
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+            radiant.call('homf:next_body', $(this).attr('id')=='nextButton').done(function(response)
+               {
+                  document.getElementById("bodyIndex").innerHTML       = response.body;
+                  document.getElementById("headIndex").innerHTML       = response.head;
+                  document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
+                  document.getElementById("facialHairIndex").innerHTML = response.facial;
+               });
          });
-      });
 
       this.$('.changeHead').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-         radiant.call('homf:next_head', $(this).attr('id')=='nextButton').done(function(response)
          {
-            document.getElementById("headIndex").innerHTML = response.head;
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+            radiant.call('homf:next_head', $(this).attr('id')=='nextButton').done(function(response)
+               {
+                  document.getElementById("headIndex").innerHTML = response.head;
+               });
          });
-      });
 
       this.$('.changeEyebrows').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-         radiant.call('homf:next_eyebrows', $(this).attr('id')=='nextButton').done(function(response)
          {
-            document.getElementById("eyebrowsIndex").innerHTML = response.eyebrows;
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+            radiant.call('homf:next_eyebrows', $(this).attr('id')=='nextButton').done(function(response)
+               {
+                  document.getElementById("eyebrowsIndex").innerHTML = response.eyebrows;
+               });
          });
-      });
 
       this.$('.changeFacialHair').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-         radiant.call('homf:next_facial', $(this).attr('id')=='nextButton').done(function(response)
          {
-            document.getElementById("facialHairIndex").innerHTML = response.facial;
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+            radiant.call('homf:next_facial', $(this).attr('id')=='nextButton').done(function(response)
+               {
+                  document.getElementById("facialHairIndex").innerHTML = response.facial;
+               });
          });
-      });
 
       $.each(this.locks, function(i, lock)
-      {
-         self.$("#"+lock).click(function()
          {
-            self._toggle_lock(lock);
+            self.$("#"+lock).click(function()
+               {
+                  self._toggle_lock(lock);
+               });
          });
-      });
 
       this.$('.ok').click(function()
-      {
-         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:trigger_click'} );
+         {
+            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:trigger_click'} );
 
-         radiant.call('homf:finish_customization');
-         radiant.call('stonehearth:dm_resume_game');
-         self.hide();
-      });
+            radiant.call('homf:finish_customization');
+            radiant.call('stonehearth:dm_resume_game');
+            self.hide();
+         });
    },
 
    destroy: function()
@@ -173,29 +173,31 @@ App.CustomizeHearthlingView = App.View.extend(
          this.show();
          var self = this;
 
-         radiant.call('homf:start_customization').done(function(response)
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
+         radiant.call('homf:start_customization')
+            .done(function(response)
+               {
+                  radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
 
-            self.$('#hearthlingName').val(response.name);
-            radiant.call('homf:set_hearthling_name', response.name);
+                  self.$('#hearthlingName').val(response.name);
+                  radiant.call('homf:set_hearthling_name', response.name);
 
-            document.getElementById("roleIndex").innerHTML       = response.role;
-            document.getElementById("bodyIndex").innerHTML       = response.body;
-            document.getElementById("headIndex").innerHTML       = response.head;
-            document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
-            document.getElementById("facialHairIndex").innerHTML = response.facial;
+                  document.getElementById("roleIndex").innerHTML       = response.role;
+                  document.getElementById("bodyIndex").innerHTML       = response.body;
+                  document.getElementById("headIndex").innerHTML       = response.head;
+                  document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
+                  document.getElementById("facialHairIndex").innerHTML = response.facial;
 
-            self._set_visibility(response.gender);
+                  self._set_visibility(response.gender);
 
-            if (self._zoom_to_hearthling)
-               radiant.call('homf:move_to_hearthling', response.hearthling);
-            if (self._pause_during_customization)
-               radiant.call('stonehearth:dm_pause_game');
-         }).fail(function(resp)
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:scenarios:redalert'} );
-         });
+                  if (self._zoom_to_hearthling)
+                     radiant.call('homf:move_to_hearthling', response.hearthling);
+                  if (self._pause_during_customization)
+                     radiant.call('stonehearth:dm_pause_game');
+               })
+            .fail(function(resp)
+               {
+                  radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:scenarios:redalert'} );
+               });
       }
       else
       {
@@ -222,33 +224,34 @@ App.CustomizeHearthlingView = App.View.extend(
          locks = null;
 
       radiant.call('homf:randomize_hearthling', newGender, locks).done(function(response)
-      {
-         if (response)
          {
-            if (response.name)
+            if (response)
             {
-               self.$('#hearthlingName').val(response.name);
-               radiant.call('homf:set_hearthling_name', response.name);
-            }
-            if (response.role)
-               document.getElementById("roleIndex").innerHTML = response.role;
-            if (response.body)
-               document.getElementById("bodyIndex").innerHTML = response.body;
-            if (response.head)
-               document.getElementById("headIndex").innerHTML = response.head;
-            if (response.eyebrows)
-               document.getElementById("eyebrowsIndex").innerHTML = response.eyebrows;
-            if (response.facial)
-               document.getElementById("facialHairIndex").innerHTML = response.facial;
+               if (response.name)
+               {
+                  self.$('#hearthlingName').val(response.name);
+                  radiant.call('homf:set_hearthling_name', response.name);
+               }
+               if (response.role)
+                  document.getElementById("roleIndex").innerHTML = response.role;
+               if (response.body)
+                  document.getElementById("bodyIndex").innerHTML = response.body;
+               if (response.head)
+                  document.getElementById("headIndex").innerHTML = response.head;
+               if (response.eyebrows)
+                  document.getElementById("eyebrowsIndex").innerHTML = response.eyebrows;
+               if (response.facial)
+                  document.getElementById("facialHairIndex").innerHTML = response.facial;
 
-            self._set_visibility(response.gender);
-         }
-      });
+               self._set_visibility(response.gender);
+            }
+         });
    },
 
    _get_locks: function()
    {
-      var locks = {
+      var locks =
+      {
          name        : "",
          gender      : "",
          body        : "",
