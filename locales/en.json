@@ -1,0 +1,14 @@
+{
+   "ui":
+   {
+      "customize_hearthling":
+      {
+         "title"       : "Customize your hearthling",
+         "role"        : "Role",
+         "body"        : "Body",
+         "head"        : "Head",
+         "eyebrows"    : "Eyebrows",
+         "facial_hair" : "Facial hair"
+      }
+   }
+}
