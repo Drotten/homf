@@ -224,6 +224,8 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks)
    if not locks or self:_is_open(locks.body) then
 
       self._sv.body_ind = rng:get_int(1, #self._bodies[role_key][gender])
+      body_ind = self._sv.body_ind
+
       models = self:_new_body()
       body   = self:_make_readable(self._bodies[role_key][gender][body_ind]) ..' '.. body_ind
    else
