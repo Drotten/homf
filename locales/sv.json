@@ -3,10 +3,11 @@
    {
       "customize_hearthling":
       {
-         "role" : "Roll",
-         "body" : "Kropp",
-         "head" : "Huvud",
-         "eyebrows" : "Ögonbryn",
+         "title"       : "Ändra utseendet",
+         "role"        : "Roll",
+         "body"        : "Kropp",
+         "head"        : "Huvud",
+         "eyebrows"    : "Ögonbryn",
          "facial_hair" : "Ansiktshår"
       }
    }
