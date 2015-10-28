@@ -113,5 +113,10 @@
       [
          "file(ui/customize_hearthling/customize_hearthling.less)"
       ]
+   },
+
+   "mixintos":
+   {
+      "stonehearth/locales/en.json" : "file(locales/en.json)"
    }
 }
