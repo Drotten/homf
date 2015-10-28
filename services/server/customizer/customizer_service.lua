@@ -197,7 +197,7 @@ function CustomizerService:_update()
 end
 
 function CustomizerService:_start_update_timer(e)
-   radiant.set_realtime_timer(500,
+   radiant.set_realtime_timer("CustomizerService _start_update_timer", 500,
       function()
          self:_start_update_timer()
          self:_update()
