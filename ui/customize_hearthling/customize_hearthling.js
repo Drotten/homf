@@ -64,9 +64,26 @@ App.CustomizeHearthlingView = App.View.extend(
             self._randomize_hearthling(null);
          });
 
+      this.$('#hearthlingName').keydown(function(e)
+         {
+            // Backspace - remove the last character in the name.
+            if (e.keyCode == 8)
+            {
+               var newName = self.$('#hearthlingName').val();
+               newName = newName.substring(0, newName.length-1);
+               radiant.call('homf:set_hearthling_name', newName);
+            }
+            // Enter - deselect the input text.
+            else if (e.keyCode == 13)
+            {
+               self.$('#hearthlingName').blur();
+            }
+         });
+
       this.$('#hearthlingName').keypress(function(e)
          {
-            radiant.call('homf:set_hearthling_name', self.$('#hearthlingName').val());
+            var newName = self.$('#hearthlingName').val() + String.fromCharCode(e.keyCode);
+            radiant.call('homf:set_hearthling_name', newName);
          });
 
       this.$('.changeRole').click(function()
