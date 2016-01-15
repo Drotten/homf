@@ -1,3 +1,8 @@
+### Version 1.1.1
+
+- **Compatibility** - Made the mod compatible with Stonehearth Alpha 14.
+
+
 ### Version 1.1
 
 - **Compatibility** - Made the mod compatible with Stonehearth Alpha 10.5.
