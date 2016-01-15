@@ -29,6 +29,4 @@ There are some extra options found in *user_settings.json*:
 - The models being used are changed when entering customization (though the gender stays the same at least).  
 
 
-Apologies for the amount of issues, I'd fix some of them now but I'm stuck with an exam in January and then a thesis. So this will have to do for now, but after that I will continue with this and some other ideas.  
-
-In the meantime, enjoy!
+Enjoy!
