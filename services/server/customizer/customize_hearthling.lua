@@ -1,12 +1,8 @@
 local rng = _radiant.math.get_default_rng()
 local CustomizeHearthling = class()
 
-function CustomizeHearthling:__init()
-end
-
-function CustomizeHearthling:initialize(player_id)
-   self._sv.player_id = player_id
-   self._log          = radiant.log.create_logger('customizer')
+function CustomizeHearthling:create()
+   self._log = radiant.log.create_logger('customizer')
 end
 
 function CustomizeHearthling:start_customization(customizing_hearthling, continue)
@@ -16,15 +12,15 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
       self._bodies = {}
       self._models = {}
 
-      local pop  = stonehearth.population:get_population(self._sv.player_id)
+      local pop  = stonehearth.population:get_population(customizing_hearthling)
       self._data = self:_load_faction_data(pop:get_kingdom())
       self:_get_model_data('male')
       self:_get_model_data('female')
    end
 
-   self._sv.customizing_hearthling = customizing_hearthling
-   self._model_variants            = self._sv.customizing_hearthling:get_component('model_variants'):get_variant('default')
-   assert(self._model_variants, 'HoMF: Model component doesn\'t exist')
+   self._customizing_hearthling = customizing_hearthling
+   self._model_variants         = self._customizing_hearthling:get_component('model_variants'):get_variant('default')
+   assert(self._model_variants, 'HoMF: Model variants component not found')
 
    local hearthling_values = {}
    local role_key
@@ -33,19 +29,19 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
 
    -- If we're loading a saved game that were in the middle of customizing a hearthling, then continue on that.
    if continue then
-      role_key = self._roles[self._sv.role_ind]
-      gender   = self._sv.gender
-      body_ind = self._sv.body_ind
+      role_key = self._roles[self._role_ind]
+      gender   = self._gender
+      body_ind = self._body_ind
 
       hearthling_values.body        = self._bodies[role_key][gender][body_ind]
-      hearthling_values.head        = self._models[role_key][gender][body_ind].heads[self._sv.head_ind]
-      hearthling_values.eyebrows    = self._models[role_key][gender][body_ind].eyebrows[self._sv.eyebrows_ind]
-      hearthling_values.facial_hair = self._models[role_key][gender][body_ind].facial_hairs[self._sv.facial_hair_ind]
+      hearthling_values.head        = self._models[role_key][gender][body_ind].heads[self._head_ind]
+      hearthling_values.eyebrows    = self._models[role_key][gender][body_ind].eyebrows[self._eyebrows_ind]
+      hearthling_values.facial_hair = self._models[role_key][gender][body_ind].facial_hairs[self._facial_hair_ind]
 
    -- Else we're starting to customize a new hearthling
    else
       -- Get the current gender and role
-      gender = self._sv.customizing_hearthling:get_component('render_info'):get_model_variant()
+      gender = self._customizing_hearthling:get_component('render_info'):get_model_variant()
       if gender ~= 'female' then
          gender = 'male'
       end
@@ -54,14 +50,14 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
       role_key       = self._roles[role_ind]
 
       -- Randomize some values
-      body_ind                 = rng:get_int(1, #self._bodies[role_key][gender])
-      self._sv.head_ind        = rng:get_int(1, #self._models[role_key][gender][body_ind].heads)
-      self._sv.eyebrows_ind    = rng:get_int(1, #self._models[role_key][gender][body_ind].eyebrows)
-      self._sv.facial_hair_ind = rng:get_int(1, #self._models[role_key][gender][body_ind].facial_hairs)
+      body_ind              = rng:get_int(1, #self._bodies[role_key][gender])
+      self._head_ind        = rng:get_int(1, #self._models[role_key][gender][body_ind].heads)
+      self._eyebrows_ind    = rng:get_int(1, #self._models[role_key][gender][body_ind].eyebrows)
+      self._facial_hair_ind = rng:get_int(1, #self._models[role_key][gender][body_ind].facial_hairs)
 
-      self._sv.gender   = gender
-      self._sv.role_ind = role_ind
-      self._sv.body_ind = body_ind
+      self._gender   = gender
+      self._role_ind = role_ind
+      self._body_ind = body_ind
 
       -- Remove all the currently used models
       self:_remove_models()
@@ -70,13 +66,11 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
       hearthling_values = self:_new_body()
    end
 
-   self._curr_gender = self._sv.gender
-
-   self.__saved_variables:mark_changed()
+   self._curr_gender = self._gender
 
    hearthling_values            = self:_make_readable(hearthling_values)
    hearthling_values.role       = role_key
-   hearthling_values.body       = hearthling_values.body ..' '.. self._sv.body_ind
+   hearthling_values.body       = hearthling_values.body ..' '.. self._body_ind
    hearthling_values.name       = self:get_hearthling_name()
    hearthling_values.gender     = gender
    hearthling_values.hearthling = customizing_hearthling
@@ -179,27 +173,27 @@ function CustomizeHearthling:_get_model_data(gender)
 end
 
 function CustomizeHearthling:randomize_hearthling(new_gender, locks)
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
    -- Remove all current models
    if not locks or self:_is_open(locks.head) then
-      self._model_variants:remove_model(self._models[role_key][gender][body_ind].heads[self._sv.head_ind])
+      self._model_variants:remove_model(self._models[role_key][gender][body_ind].heads[self._head_ind])
    end
    if not locks or self:_is_open(locks.eyebrows) then
-      self._model_variants:remove_model(self._models[role_key][gender][body_ind].eyebrows[self._sv.eyebrows_ind])
+      self._model_variants:remove_model(self._models[role_key][gender][body_ind].eyebrows[self._eyebrows_ind])
    end
    if not locks or self:_is_open(locks.facial_hair) then
-      self._model_variants:remove_model(self._models[role_key][gender][body_ind].facial_hairs[self._sv.facial_hair_ind])
+      self._model_variants:remove_model(self._models[role_key][gender][body_ind].facial_hairs[self._facial_hair_ind])
    end
    if not locks or self:_is_open(locks.body) then
       self._model_variants:remove_model(self._bodies[role_key][gender][body_ind])
    end
 
    if new_gender then
-      self._sv.gender = new_gender
-      gender          = new_gender
+      self._gender = new_gender
+      gender       = new_gender
    else
       gender = self:_random_gender(locks)
    end
@@ -217,14 +211,14 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks)
    -- Randomize models and produces text from each.
    -- If new_gender has a value, that means a new gender was chosen by the player and thus we don't randomize the role.
    if not new_gender and (not locks or self:_is_open(locks.role)) then
-      self._sv.role_ind = rng:get_int(1, #self._roles)
-      role_key          = self._roles[self._sv.role_ind]
+      self._role_ind = rng:get_int(1, #self._roles)
+      role_key       = self._roles[self._role_ind]
    end
 
    if not locks or self:_is_open(locks.body) then
 
-      self._sv.body_ind = rng:get_int(1, #self._bodies[role_key][gender])
-      body_ind = self._sv.body_ind
+      self._body_ind = rng:get_int(1, #self._bodies[role_key][gender])
+      body_ind = self._body_ind
 
       models = self:_new_body()
       body   = self:_make_readable(self._bodies[role_key][gender][body_ind]) ..' '.. body_ind
@@ -249,33 +243,29 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks)
       facial = self:_make_readable(models.facial)
    end
 
-   self.__saved_variables:mark_changed()
-
    return {name=name, role=role_key, gender=gender, body=body, head=head, eyebrows=eyebrows, facial=facial}
 end
 
 function CustomizeHearthling:next_role(is_next)
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
-   self._model_variants:remove_model(self._models[role_key][gender][body_ind].facial_hairs[self._sv.facial_hair_ind])
-   self._model_variants:remove_model(self._models[role_key][gender][body_ind].eyebrows[self._sv.eyebrows_ind])
-   self._model_variants:remove_model(self._models[role_key][gender][body_ind].heads[self._sv.head_ind])
+   self._model_variants:remove_model(self._models[role_key][gender][body_ind].facial_hairs[self._facial_hair_ind])
+   self._model_variants:remove_model(self._models[role_key][gender][body_ind].eyebrows[self._eyebrows_ind])
+   self._model_variants:remove_model(self._models[role_key][gender][body_ind].heads[self._head_ind])
    self._model_variants:remove_model(self._bodies[role_key][gender][body_ind])
 
-   self._sv.role_ind = homf.util.rotate_table_index(self._sv.role_ind, self._roles, is_next)
-   role_key          = self._roles[self._sv.role_ind]
+   self._role_ind = homf.util.rotate_table_index(self._role_ind, self._roles, is_next)
+   role_key       = self._roles[self._role_ind]
 
    gender = self:_random_gender()
 
-   self._sv.body_ind = rng:get_int(1, #self._bodies[role_key][gender])
-   body_ind          = self._sv.body_ind
+   self._body_ind = rng:get_int(1, #self._bodies[role_key][gender])
+   body_ind       = self._body_ind
 
    self:_switch_outfit()
    local models = self:_new_body()
-
-   self.__saved_variables:mark_changed()
 
    models        = self:_make_readable(models)
    models.name   = self:_random_name()
@@ -286,21 +276,19 @@ function CustomizeHearthling:next_role(is_next)
 end
 
 function CustomizeHearthling:next_body(is_next)
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
-   self._model_variants:remove_model(self._models[role_key][gender][body_ind].facial_hairs[self._sv.facial_hair_ind])
-   self._model_variants:remove_model(self._models[role_key][gender][body_ind].eyebrows[self._sv.eyebrows_ind])
-   self._model_variants:remove_model(self._models[role_key][gender][body_ind].heads[self._sv.head_ind])
+   self._model_variants:remove_model(self._models[role_key][gender][body_ind].facial_hairs[self._facial_hair_ind])
+   self._model_variants:remove_model(self._models[role_key][gender][body_ind].eyebrows[self._eyebrows_ind])
+   self._model_variants:remove_model(self._models[role_key][gender][body_ind].heads[self._head_ind])
    self._model_variants:remove_model(self._bodies[role_key][gender][body_ind])
 
-   self._sv.body_ind = homf.util.rotate_table_index(body_ind, self._bodies[role_key][gender], is_next)
-   body_ind          = self._sv.body_ind
+   self._body_ind = homf.util.rotate_table_index(body_ind, self._bodies[role_key][gender], is_next)
+   body_ind       = self._body_ind
 
    local models = self:_new_body()
-
-   self.__saved_variables:mark_changed()
 
    local models = self:_make_readable(models)
    models.body  = self:_make_readable(self._bodies[role_key][gender][body_ind]) ..' '.. body_ind
@@ -308,100 +296,92 @@ function CustomizeHearthling:next_body(is_next)
 end
 
 function CustomizeHearthling:next_head(is_next)
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
    local heads = self._models[role_key][gender][body_ind].heads
-   self._model_variants:remove_model(heads[self._sv.head_ind])
+   self._model_variants:remove_model(heads[self._head_ind])
 
-   self._sv.head_ind = homf.util.rotate_table_index(self._sv.head_ind, heads, is_next)
+   self._head_ind = homf.util.rotate_table_index(self._head_ind, heads, is_next)
 
    -- Set the head model
-   self:_add_model(heads[self._sv.head_ind])
+   self:_add_model(heads[self._head_ind])
 
-   self.__saved_variables:mark_changed()
-
-   return {head = self:_make_readable(heads[self._sv.head_ind])}
+   return {head = self:_make_readable(heads[self._head_ind])}
 end
 
 function CustomizeHearthling:next_eyebrows(is_next)
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
    local eyebrows = self._models[role_key][gender][body_ind].eyebrows
-   self._model_variants:remove_model(eyebrows[self._sv.eyebrows_ind])
+   self._model_variants:remove_model(eyebrows[self._eyebrows_ind])
 
-   self._sv.eyebrows_ind = homf.util.rotate_table_index(self._sv.eyebrows_ind, eyebrows, is_next)
+   self._eyebrows_ind = homf.util.rotate_table_index(self._eyebrows_ind, eyebrows, is_next)
 
    -- Set the eyebrows model
-   self:_add_model(eyebrows[self._sv.eyebrows_ind])
+   self:_add_model(eyebrows[self._eyebrows_ind])
 
-   self.__saved_variables:mark_changed()
-
-   return {eyebrows = self:_make_readable(eyebrows[self._sv.eyebrows_ind])}
+   return {eyebrows = self:_make_readable(eyebrows[self._eyebrows_ind])}
 end
 
 function CustomizeHearthling:next_facial(is_next)
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
    local facial_hairs = self._models[role_key][gender][body_ind].facial_hairs
-   self._model_variants:remove_model(facial_hairs[self._sv.facial_hair_ind])
+   self._model_variants:remove_model(facial_hairs[self._facial_hair_ind])
 
-   self._sv.facial_hair_ind = homf.util.rotate_table_index(self._sv.facial_hair_ind, facial_hairs, is_next)
+   self._facial_hair_ind = homf.util.rotate_table_index(self._facial_hair_ind, facial_hairs, is_next)
 
    -- Set the facial hair model
-   self:_add_model(facial_hairs[self._sv.facial_hair_ind])
+   self:_add_model(facial_hairs[self._facial_hair_ind])
 
-   self.__saved_variables:mark_changed()
-
-   return {facial = self:_make_readable(facial_hairs[self._sv.facial_hair_ind])}
+   return {facial = self:_make_readable(facial_hairs[self._facial_hair_ind])}
 end
 
 function CustomizeHearthling:get_hearthling_name()
    local name = ''
-   if self._sv.gender == 'male' then
+   if self._gender == 'male' then
       name = 'Mr McHearthling'
    else
       name = 'Ms McHearthling'
    end
 
-   if self._sv.customizing_hearthling then
-      name = radiant.entities.get_custom_name(self._sv.customizing_hearthling)
+   if self._customizing_hearthling then
+      name = radiant.entities.get_custom_name(self._customizing_hearthling)
    end
 
    return name
 end
 
 function CustomizeHearthling:set_hearthling_name(name)
-   if self._sv.customizing_hearthling and type(name) == "string" then
-      radiant.entities.set_name(self._sv.customizing_hearthling, name)
+   if self._customizing_hearthling and type(name) == "string" then
+      radiant.entities.set_name(self._customizing_hearthling, name)
    end
-
-   self.__saved_variables:mark_changed()
 end
 
 function CustomizeHearthling:get_current_model_data()
-   local role_key    = self._roles[self._sv.role_ind]
-   local gender      = self._sv.gender
-   local body_ind    = self._sv.body_ind
+   local role_key    = self._roles[self._role_ind]
+   local gender      = self._gender
+   local body_ind    = self._body_ind
    local curr_models = {}
 
    curr_models.body        = self._bodies[role_key][gender][body_ind]
-   curr_models.head        = self._models[role_key][gender][body_ind].heads[self._sv.head_ind]
-   curr_models.eyebrows    = self._models[role_key][gender][body_ind].eyebrows[self._sv.eyebrows_ind]
-   curr_models.facial_hair = self._models[role_key][gender][body_ind].facial_hairs[self._sv.facial_hair_ind]
+   curr_models.head        = self._models[role_key][gender][body_ind].heads[self._head_ind]
+   curr_models.eyebrows    = self._models[role_key][gender][body_ind].eyebrows[self._eyebrows_ind]
+   curr_models.facial_hair = self._models[role_key][gender][body_ind].facial_hairs[self._facial_hair_ind]
 
    return curr_models
 end
 
 function CustomizeHearthling:_new_body()
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
    local random_models = self:_randomize_models()
    random_models.body  = self._bodies[role_key][gender][body_ind]
@@ -411,29 +391,29 @@ function CustomizeHearthling:_new_body()
 end
 
 function CustomizeHearthling:_randomize_models(locks)
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
-   local body_ind = self._sv.body_ind
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
+   local body_ind = self._body_ind
 
    local heads = self._models[role_key][gender][body_ind].heads
    if not locks or self:_is_open(locks.head) then
-      self._sv.head_ind = rng:get_int(1, #heads)
+      self._head_ind = rng:get_int(1, #heads)
    end
-   local head = heads[self._sv.head_ind]
+   local head = heads[self._head_ind]
 
    local eyebrowses = self._models[role_key][gender][body_ind].eyebrows
    if not locks or self:_is_open(locks.eyebrows) then
-      self._sv.eyebrows_ind = rng:get_int(1, #eyebrowses)
+      self._eyebrows_ind = rng:get_int(1, #eyebrowses)
    end
-   local eyebrows = eyebrowses[self._sv.eyebrows_ind]
+   local eyebrows = eyebrowses[self._eyebrows_ind]
 
    local facial_hairs = self._models[role_key][gender][body_ind].facial_hairs
    if not locks or self:_is_open(locks.facial_hair) then
-      self._sv.facial_hair_ind = rng:get_int(1, #facial_hairs)
+      self._facial_hair_ind = rng:get_int(1, #facial_hairs)
    end
-   local facial = facial_hairs[self._sv.facial_hair_ind]
+   local facial = facial_hairs[self._facial_hair_ind]
 
-   if self._sv.customizing_hearthling then
+   if self._customizing_hearthling then
       if not locks or self:_is_open(locks.head) then
          self:_add_model(head)
       end
@@ -451,13 +431,13 @@ end
 function CustomizeHearthling:_random_gender(locks)
    if not locks or self:_is_open(locks.gender) then
       if rng:get_int(1,2) == 1 then
-         self._sv.gender = 'female'
+         self._gender = 'female'
       else
-         self._sv.gender = 'male'
+         self._gender = 'male'
       end
    end
 
-   return self._sv.gender
+   return self._gender
 end
 
 function CustomizeHearthling:_add_model(model_path)
@@ -468,20 +448,20 @@ end
 
 function CustomizeHearthling:_switch_outfit()
    -- Switch to a different outfit for the current job
-   if self._curr_gender ~= self._sv.gender then
-      local render_info_component = self._sv.customizing_hearthling:get_component('render_info')
+   if self._curr_gender ~= self._gender then
+      local render_info_component = self._customizing_hearthling:get_component('render_info')
       -- Change render_info component to reflect the new gender
 
       --BUG: for some reason the shoulders gets an offset when animation table is changed... doesn't seem to do any harm to not change it, keep like this?
       --     could be related to the models skeleton, if so it should be changed as well
-      --render_info_component:set_animation_table('stonehearth:skeletons:humanoid:'..self._sv.gender)
+      --render_info_component:set_animation_table('stonehearth:skeletons:humanoid:'..self._gender)
       local new_model_variant = ''
-      if self._sv.gender == 'female' then
-         new_model_variant = self._sv.gender
+      if self._gender == 'female' then
+         new_model_variant = self._gender
       end
       render_info_component:set_model_variant(new_model_variant)
 
-      self._curr_gender = self._sv.gender
+      self._curr_gender = self._gender
    end
 end
 
@@ -514,8 +494,8 @@ function CustomizeHearthling:_make_readable(str)
 end
 
 function CustomizeHearthling:_random_name()
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
 
    local given_names = self._data.roles[role_key][gender].given_names
    local surnames    = self._data.roles[role_key].surnames
@@ -534,8 +514,8 @@ function CustomizeHearthling:_remove_models()
       end
    end
 
-   local role_key = self._roles[self._sv.role_ind]
-   local gender   = self._sv.gender
+   local role_key = self._roles[self._role_ind]
+   local gender   = self._gender
 
    for body_ind=1, #self._bodies[role_key][gender] do
       remove_all_models_aux(self._models[role_key][gender][body_ind].heads)

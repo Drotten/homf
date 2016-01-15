@@ -1,9 +1,9 @@
 local Vec3       = _radiant.csg.Point3
 local Quat       = _radiant.csg.Quaternion
 local Ray        = _radiant.csg.Ray3
-local camera     = stonehearth.camera
+local cam        = stonehearth.camera
 local deg_to_rad = 3.14159 / 180.0
-local moving     = false
+local cam_moving = false
 local HearthlingCameraCallHandler = class()
 
 -- Finds the best spot for the camera to move to for a close up of the hearthling
@@ -29,21 +29,20 @@ function HearthlingCameraCallHandler:move_to_hearthling(session, response, heart
    if not hearthling or type(hearthling) == 'string' or not hearthling:is_valid() then
       return
    end
-   local cam_height = camera:get_position().y
+   local cam_height = cam:get_position().y
    local entity_pos = hearthling:get_component('mob'):get_location()
-   local t = (cam_height - entity_pos.y) / -camera:get_forward().y
+   local t = (cam_height - entity_pos.y) / -cam:get_forward().y
    if t > 20 then
       t = 20
    end
-   local camera_pos = entity_pos + -camera:get_forward():scaled(t) + camera:get_left():scaled(3)
+   local camera_pos = entity_pos + -cam:get_forward():scaled(t) + cam:get_left():scaled(3)
    local camera_rot = Quat()
    --]] /TEMP
 
-   if moving then
-      camera:controller_top():new_position(camera_pos, camera_rot, 2500)
-   else
-      camera:push_controller('homf:move_rotate_to_camera_controller', camera_pos, camera_rot, 2500, self)
+   if not cam_moving then
+      cam:push_controller('homf:move_rotate_to_camera_controller')
    end
+   cam:controller_top():set_cam_values(camera_pos, camera_rot, 2500, self)
 end
 
 function HearthlingCameraCallHandler:follow_hearthling(session, response, hearthling)
@@ -54,8 +53,8 @@ function HearthlingCameraCallHandler:stop_follow(session, response)
    --TODO: stop following the hearthling
 end
 
-function HearthlingCameraCallHandler:set_moving(val)
-   moving = val
+function HearthlingCameraCallHandler:set_cam_moving(is_moving)
+   cam_moving = is_moving
 end
 
 return HearthlingCameraCallHandler

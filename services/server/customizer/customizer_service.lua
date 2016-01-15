@@ -1,53 +1,33 @@
 local CustomizerService   = class()
 
-function CustomizerService:__init()
-end
-
 function CustomizerService:initialize()
    self._sv = self.__saved_variables:get_data()
-
    self._to_be_customized = {}
 
    if self._sv.initialized then
       self._pop_count = #self._sv.customized_hearthlings
-
-      radiant.events.listen_once(self, 'homf:tracker_online', self,
-         function()
-            self._pop = stonehearth.population:get_population(self._sv.player_id)
-            if self._sv.customizing_hearthling then
-               self._continue = true
-               radiant.events.trigger_async(homf.customizer, 'homf:customize', {hearthling = self._sv.customizing_hearthling})
-
-               self._sv.customize_hearthling = radiant.create_controller('homf:customizer:customize_hearthling', self._sv.player_id)
-            end
-            self:_start_update_timer()
-         end)
    else
       self._sv.initialized = true
-      --TODO: need to get the right player_id at all times
-      self._sv.player_id              = 'player_1'
       self._sv.customized_hearthlings = {}
-
-      self.__saved_variables:mark_changed()
-
       self._pop_count = 0
 
-      radiant.events.listen_once(self, 'homf:tracker_online', self,
-         function()
-            self._pop = stonehearth.population:get_population(self._sv.player_id)
-            self:_start_update_timer()
-
-            self._sv.customize_hearthling = radiant.create_controller('homf:customizer:customize_hearthling', self._sv.player_id)
-         end)
+      self.__saved_variables:mark_changed()
    end
+
+   radiant.events.listen_once(self, 'homf:tracker_online', self, self._on_tracker_online)
 end
 
-function CustomizerService:get_tbc()
-   return self._to_be_customized or {}
-end
+function CustomizerService:_on_tracker_online(player_id)
+   self._pop = stonehearth.population:get_population(player_id)
+   self._sv.customize_hearthling = radiant.create_controller('homf:customizer:customize_hearthling')
 
-function CustomizerService:get_cc()
-   return self._sv.customized_hearthlings
+   if self._sv.customizing_hearthling then
+      self._continue = true
+      radiant.events.trigger_async(homf.customizer, 'homf:customize', { hearthling = self._sv.customizing_hearthling })
+   end
+
+   self.__saved_variables:mark_changed()
+   self:_start_update_timer()
 end
 
 function CustomizerService:try_customization(hearthling)
@@ -161,8 +141,9 @@ function CustomizerService:_get_unchecked_hearthling(hearthlings)
 end
 
 function CustomizerService:_update()
-   local hearthlings        = {}
+   local hearthlings = {}
    local hearthlings_length = 0
+
    for _,hearthling in pairs(self._pop:get_citizens()) do
       hearthlings_length = hearthlings_length + 1
       table.insert(hearthlings, hearthling)
