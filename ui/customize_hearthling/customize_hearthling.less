@@ -2,6 +2,12 @@
 {
    margin: auto;
 
+   .stdBG
+   {
+      background-position: center;
+      background-repeat:   no-repeat;
+   }
+
    .window
    {
       position: relative;
@@ -44,46 +50,44 @@
          height: 80px;
          background: url('./images/random.png');
          background-size: 90px 90px;
-         background-position: center;
-         background-repeat: no-repeat;
       }
 
-      #maleButton
+      .genderButton
       {
          position: relative;
          left: 180px;
          width: 70px;
          height: 70px;
+      }
+      #maleButton
+      {
+         .genderButton;
          background: url('./images/male.png');
-         background-position: center;
-         background-repeat: no-repeat;
+         .stdBG;
       }
       #femaleButton
       {
-         position: relative;
-         left: 180px;
-         width: 70px;
-         height: 70px;
+         .genderButton;
          background: url('./images/female.png');
-         background-position: center;
-         background-repeat: no-repeat;
+         .stdBG;
       }
 
-      #previousButton
+      .progressButton
       {
          width: 12px;
          height: 23px;
+      }
+      #previousButton
+      {
+         .progressButton;
          background: url('./images/left_arrow.png');
-         background-position: center;
-         background-repeat: no-repeat;
+         .stdBG;
       }
       #nextButton
       {
-         width: 12px;
-         height: 23px;
+         .progressButton;
          background: url('./images/right_arrow.png');
-         background-position: center;
-         background-repeat: no-repeat;
+         .stdBG;
       }
 
       .index
@@ -105,27 +109,26 @@
          top: 188px;
       }
 
-      .unlocked
+      .stdLock
       {
          position: absolute;
          right: 0px;
          width: 20px;
          height: 20px;
+      }
+      .unlocked
+      {
+         .stdLock;
          background: url('./images/unlocked.png');
          background-size: 15px 15px;
-         background-position: center;
-         background-repeat: no-repeat;
+         .stdBG;
       }
       .locked
       {
-         position: absolute;
-         right: 0px;
-         width: 20px;
-         height: 20px;
+         .stdLock;
          background: url('./images/locked.png');
          background-size: 15px 15px;
-         background-position: center;
-         background-repeat: no-repeat;
+         .stdBG;
       }
    }
 }
