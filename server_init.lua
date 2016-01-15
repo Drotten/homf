@@ -1,5 +1,4 @@
 homf = {}
-
 homf.util = require('lib.util')
 
 local function create_service(name)
@@ -17,13 +16,13 @@ local function create_service(name)
    saved_variables:set_controller(service)
    service:initialize()
    homf[name] = service
-
-   radiant.events.trigger(homf.customizer, 'homf:initialized')
 end
 
-radiant.events.listen_once(homf, 'radiant:init', function()
+function homf:_on_required_loaded()
    homf._sv = homf.__saved_variables:get_data()
    create_service('customizer')
-end)
+end
+
+radiant.events.listen_once(radiant, 'radiant:required_loaded', homf, homf._on_required_loaded)
 
 return homf
