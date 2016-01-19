@@ -3,7 +3,7 @@
    {
       "name"        : "Hearthlings of many faces",
       "description" : "Change your hearthlings' appearance to your preferences.",
-      "version"     : 1
+      "version"     : 2
    },
 
    "default_locale"     : "en",
