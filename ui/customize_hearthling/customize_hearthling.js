@@ -1,20 +1,7 @@
-App.CustomizeHearthlingView = App.View.extend(
-{
+App.CustomizeHearthlingView = App.View.extend({
    templateName: 'customizeHearthling',
    classNames: ['flex', 'fullScreen'],
    closeOnEsc: false,
-
-   locks:
-   [
-      "nameLock",
-      "roleLock",
-      "genderLock",
-      "bodyLock",
-      "headLock",
-      "eyebrowsLock",
-      "facialHairLock"
-   ],
-
 
    init: function()
    {
@@ -23,46 +10,43 @@ App.CustomizeHearthlingView = App.View.extend(
       this._zoom_to_hearthling = true;
       var self = this;
 
-      radiant.call('radiant:get_config', 'mods.homf').done(function(o)
-         {
-            var cfg = (o || {})['mods.homf'] || {};
+      radiant.call('radiant:get_config', 'mods.homf')
+         .done(function(o)
+            {
+               var cfg = (o || {})['mods.homf'] || {};
 
-            self._pause_during_customization = cfg['pause_during_customization'];
-            if (self._pause_during_customization == null)
-               self._pause_during_customization = true;
+               self._pause_during_customization = cfg['pause_during_customization'];
+               if (self._pause_during_customization == null)
+                  self._pause_during_customization = true;
 
-            self._zoom_to_hearthling = cfg['zoom_to_hearthling'];
-            if (self._zoom_to_hearthling == null)
-               self._zoom_to_hearthling = true;
-         });
+               self._zoom_to_hearthling = cfg['zoom_to_hearthling'];
+               if (self._zoom_to_hearthling == null)
+                  self._zoom_to_hearthling = true;
+            }
+         );
 
-      radiant.call('homf:get_tracker').done(function(response)
-         {
-            self.trace = radiant.trace(response.tracker)
-               .progress(function(data)
-                  {
-                     self.start_customization(data.hearthling);
-                  })
-               .fail(function(e)
-                  {
-                     console.log(e);
-                  });
-         });
+      radiant.call('homf:get_tracker')
+         .done(function(response)
+            {
+               self.trace = radiant.trace(response.tracker)
+                  .progress(function(data)
+                     {
+                        self.startCustomization(data.hearthling);
+                     }
+                  )
+                  .fail(function(e)
+                     {
+                        console.log(e);
+                     }
+                  );
+            }
+         );
    },
 
    didInsertElement: function()
    {
       this._super();
       var self = this;
-
-      this.$().draggable();
-
-      this.$('#randomButton').click(function()
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
-
-            self._randomize_hearthling(null);
-         });
 
       this.$('#hearthlingName').keydown(function(e)
          {
@@ -78,94 +62,15 @@ App.CustomizeHearthlingView = App.View.extend(
             {
                self.$('#hearthlingName').blur();
             }
-         });
+         }
+      );
 
       this.$('#hearthlingName').keypress(function(e)
          {
             var newName = self.$('#hearthlingName').val() + String.fromCharCode(e.keyCode);
             radiant.call('homf:set_hearthling_name', newName);
-         });
-
-      this.$('.changeRole').click(function()
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-            radiant.call('homf:next_role', $(this).attr('id')=='nextButton').done(function(response)
-               {
-                  self.$('#hearthlingName').val(response.name);
-                  radiant.call('homf:set_hearthling_name', response.name);
-
-                  document.getElementById("roleIndex").innerHTML       = response.role;
-                  document.getElementById("bodyIndex").innerHTML       = response.body;
-                  document.getElementById("headIndex").innerHTML       = response.head;
-                  document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
-                  document.getElementById("facialHairIndex").innerHTML = response.facial;
-
-                  self._set_visibility(response.gender);
-               });
-         });
-
-      this.$('.genderButton').click(function()
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-            var newGender = 'female';
-            if ($(this).attr('id') == 'maleButton')
-               newGender = 'male';
-
-            self._randomize_hearthling(newGender);
-         });
-
-      this.$('.changeBody').click(function()
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-            radiant.call('homf:next_body', $(this).attr('id')=='nextButton').done(function(response)
-               {
-                  document.getElementById("bodyIndex").innerHTML       = response.body;
-                  document.getElementById("headIndex").innerHTML       = response.head;
-                  document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
-                  document.getElementById("facialHairIndex").innerHTML = response.facial;
-               });
-         });
-
-      this.$('.changeHead').click(function()
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-            radiant.call('homf:next_head', $(this).attr('id')=='nextButton').done(function(response)
-               {
-                  document.getElementById("headIndex").innerHTML = response.head;
-               });
-         });
-
-      this.$('.changeEyebrows').click(function()
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-            radiant.call('homf:next_eyebrows', $(this).attr('id')=='nextButton').done(function(response)
-               {
-                  document.getElementById("eyebrowsIndex").innerHTML = response.eyebrows;
-               });
-         });
-
-      this.$('.changeFacialHair').click(function()
-         {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
-
-            radiant.call('homf:next_facial', $(this).attr('id')=='nextButton').done(function(response)
-               {
-                  document.getElementById("facialHairIndex").innerHTML = response.facial;
-               });
-         });
-
-      $.each(this.locks, function(i, lock)
-         {
-            self.$("#"+lock).click(function()
-               {
-                  self._toggle_lock(lock);
-               });
-         });
+         }
+      );
 
       this.$('.ok').click(function()
          {
@@ -174,7 +79,70 @@ App.CustomizeHearthlingView = App.View.extend(
             radiant.call('homf:finish_customization');
             radiant.call('stonehearth:dm_resume_game');
             self.hide();
-         });
+         }
+      );
+   },
+
+   actions:
+   {
+      randomize: function()
+      {
+         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
+         this._randomizeHearthling(null);
+      },
+
+      setGender: function(gender)
+      {
+         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+         this._randomizeHearthling(gender);
+      },
+
+      nextRole: function(isNext)
+      {
+         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+         var self = this;
+         radiant.call('homf:next_role', isNext)
+            .done(function(response)
+               {
+                  var displayName = self._makeReadable(response.role);
+                  document.getElementById('role').innerHTML = displayName;
+               }
+            );
+      },
+
+      nextModel: function(key, isNext)
+      {
+         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+         var self = this;
+         radiant.call('homf:next_model', key, isNext)
+            .done(function(response)
+               {
+                  var displayName = self._makeReadable(response.model);
+                  document.getElementById(key).innerHTML = displayName;
+               }
+            );
+      },
+
+      nextMaterialMap: function(key, isNext)
+      {
+         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+         var self = this;
+         radiant.call('homf:next_material_map', key, isNext)
+            .done(function(response)
+               {
+                  var displayName = self._makeReadable(response.material_map);
+                  document.getElementById(key).innerHTML = displayName.replace(/ Material Map/g, '');
+               }
+            );
+      },
+
+      toggleLock: function(key)
+      {
+         this._toggleLock(key);
+      }
    },
 
    destroy: function()
@@ -183,7 +151,7 @@ App.CustomizeHearthlingView = App.View.extend(
       this.trace.destroy();
    },
 
-   start_customization: function(hearthling)
+   startCustomization: function(hearthling)
    {
       if (hearthling != null)
       {
@@ -196,25 +164,28 @@ App.CustomizeHearthlingView = App.View.extend(
                   radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
 
                   self.$('#hearthlingName').val(response.name);
-                  radiant.call('homf:set_hearthling_name', response.name);
 
-                  document.getElementById("roleIndex").innerHTML       = response.role;
-                  document.getElementById("bodyIndex").innerHTML       = response.body;
-                  document.getElementById("headIndex").innerHTML       = response.head;
-                  document.getElementById("eyebrowsIndex").innerHTML   = response.eyebrows;
-                  document.getElementById("facialHairIndex").innerHTML = response.facial;
+                  self.set('multiple_roles', response.sizes.role > 1);
+                  self.set('role', self._makeReadable(response.role));
+                  self.set('roleLockStatus', 'unlocked');
 
-                  self._set_visibility(response.gender);
+                  var options = self._genDefaultMapOptions();
+
+                  var models = self._modifyMap(response.models, response.sizes, options);
+                  self.set('models', radiant.map_to_array(models));
+
+                  options.strip = '_material_map';
+                  var material_maps = self._modifyMap(response.material_maps, response.sizes, options);
+                  self.set('material_maps', radiant.map_to_array(material_maps));
+
+                  self._setupLocks();
 
                   if (self._zoom_to_hearthling)
-                     radiant.call('homf:move_to_hearthling', response.hearthling);
+                     radiant.call('homf:move_to_hearthling', hearthling);
                   if (self._pause_during_customization)
                      radiant.call('stonehearth:dm_pause_game');
-               })
-            .fail(function(resp)
-               {
-                  radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:scenarios:redalert'} );
-               });
+               }
+            );
       }
       else
       {
@@ -224,170 +195,234 @@ App.CustomizeHearthlingView = App.View.extend(
 
    hide: function()
    {
-      document.getElementById("customizeHearthling").style.display = "none";
+      document.getElementById('customizeHearthling').style.display = 'none';
    },
 
    show: function()
    {
-      document.getElementById("customizeHearthling").style.display = "block";
+      document.getElementById('customizeHearthling').style.display = 'block';
    },
 
-   _randomize_hearthling: function(newGender)
+   _randomizeHearthling: function(newGender)
    {
       var self  = this;
-      var locks = self._get_locks();
+      var locks = null;
 
-      if (newGender != null)
-         locks = null;
+      if (newGender == null)
+         locks = self._getLocks();
 
-      radiant.call('homf:randomize_hearthling', newGender, locks).done(function(response)
-         {
-            if (response)
+      radiant.call('homf:randomize_hearthling', newGender, locks)
+         .done(function(response)
             {
                if (response.name)
                {
                   self.$('#hearthlingName').val(response.name);
                   radiant.call('homf:set_hearthling_name', response.name);
                }
-               if (response.role)
-                  document.getElementById("roleIndex").innerHTML = response.role;
-               if (response.body)
-                  document.getElementById("bodyIndex").innerHTML = response.body;
-               if (response.head)
-                  document.getElementById("headIndex").innerHTML = response.head;
-               if (response.eyebrows)
-                  document.getElementById("eyebrowsIndex").innerHTML = response.eyebrows;
-               if (response.facial)
-                  document.getElementById("facialHairIndex").innerHTML = response.facial;
 
-               self._set_visibility(response.gender);
+               if (response.role)
+               {
+                  self.set('multiple_roles', response.sizes.role > 1);
+                  self.set('role', self._makeReadable(response.role));
+                  var lockStatus = 'unlocked';
+                  if (locks  &&  locks.role)
+                     lockStatus = locks.role;
+                  self.set('roleLockStatus', lockStatus);
+               }
+
+               var options = self._genDefaultMapOptions();
+
+               var models = self._modifyMap(response.models, response.sizes, options);
+               self.set('models', radiant.map_to_array(models));
+
+               options.strip = '_material_map';
+               var material_maps = self._modifyMap(response.material_maps, response.sizes, options);
+               self.set('material_maps', radiant.map_to_array(material_maps));
             }
-         });
+         );
    },
 
-   _get_locks: function()
+   _setupLocks: function()
    {
-      var locks =
-      {
-         name        : "",
-         gender      : "",
-         body        : "",
-         head        : "",
-         eyebrows    : "",
-         facial_hair : ""
-      };
+      //TODO: Setup the locks so that when something is locked, it will also make sure to lock everything that it is dependent on (e.g. when locking a model, it will also have to lock the gender).
+   },
 
-      locks.name        = document.getElementById("nameLock").className;
-      locks.gender      = document.getElementById("genderLock").className;
-      locks.body        = document.getElementById("bodyLock").className;
-      locks.head        = document.getElementById("headLock").className;
-      locks.eyebrows    = document.getElementById("eyebrowsLock").className;
-      locks.facial_hair = document.getElementById("facialHairLock").className;
+   _getLocks: function()
+   {
+      var locks = {};
+
+      locks.name   = this.$('#nameLock').attr('class');
+      locks.gender = this.$('#genderLock').attr('class');
+
+      var mulRoles = this.get('multiple_roles');
+      if (mulRoles)
+         locks.role = this.$('#roleLock').attr('class');
+      else
+         locks.role = 'locked';
+
+      var material_maps = this.get('material_maps');
+      radiant.each(material_maps, function(_, material_map)
+         {
+            var element = this.$('#' + material_map.lockKey);
+            if (element)
+               locks[material_map.key] = element.attr('class');
+            else
+               locks[material_map.key] = 'locked';
+         }
+      );
+
+      var models = this.get('models');
+      radiant.each(models, function(_, model)
+         {
+            var element = this.$('#' + model.lockKey);
+            if (element)
+               locks[model.key] = element.attr('class');
+            else
+               locks[model.key] = 'locked';
+         }
+      );
 
       return locks;
    },
 
-   _toggle_lock: function(lock)
+   _toggleLock: function(lock)
    {
-      var lockStatus = document.getElementById(lock).className;
-      if (lockStatus == "unlocked")
-         this._change_lock(lock, "locked");
-      else
-         this._change_lock(lock, "unlocked");
+      var toStatus = 'unlocked';
+      if (this.$('#' + lock).attr('class') == 'unlocked')
+         toStatus = 'locked';
+
+      this._changeLockStatus(lock, toStatus);
    },
 
-   _change_lock: function(lock, toLockStatus)
+   _changeLockStatus: function(lock, newStatus)
    {
       radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
-      document.getElementById(lock).className = toLockStatus;
-      if (toLockStatus == "unlocked")
+      this.$('#' + lock).attr('class', newStatus);
+      if (newStatus == 'unlocked')
       {
-         if (lock == "roleLock")
-            this._unlock_gender();
-         else if (lock == "genderLock")
-            this._unlock_body();
-         else if (lock == "bodyLock")
-            this._unlock_head();
+         if (lock == 'roleLock')
+            this._unlockGender();
+         else if (lock == 'genderLock')
+            this._unlockBody();
+         else if (lock == 'bodyLock')
+            this._unlockModels();
       }
-      else if (toLockStatus == "locked")
+      else // (newStatus == 'locked')
       {
-         if (lock == "headLock"  ||  lock == "eyebrowsLock"  ||  lock == "facialHairLock")
-            this._lock_body();
-         else if (lock == "bodyLock")
-            this._lock_gender();
-         else if (lock == "genderLock")
-            this._lock_role();
-      }
-   },
-
-   _unlock_gender: function()
-   {
-      document.getElementById("genderLock").className = "unlocked";
-      this._unlock_body();
-   },
-
-   _unlock_body: function()
-   {
-      document.getElementById("bodyLock").className = "unlocked";
-      this._unlock_head();
-   },
-
-   _unlock_head: function()
-   {
-      document.getElementById("headLock").className       = "unlocked";
-      document.getElementById("eyebrowsLock").className   = "unlocked";
-      document.getElementById("facialHairLock").className = "unlocked";
-   },
-
-   _lock_body: function()
-   {
-      document.getElementById("bodyLock").className = "locked";
-      this._lock_gender();
-   },
-
-   _lock_gender: function()
-   {
-      document.getElementById("genderLock").className = "locked";
-      this._lock_role();
-   },
-
-   _lock_role: function()
-   {
-      document.getElementById("roleLock").className = "locked";
-   },
-
-   _set_visibility: function(gender)
-   {
-      if (gender == "male")
-      {
-         document.getElementById('eyebrows').className   = 'visible';
-         document.getElementById('facialHair').className = 'visible';
-      }
-      else
-      {
-         document.getElementById('eyebrows').className   = 'hidden';
-         document.getElementById('facialHair').className = 'hidden';
+         if (lock == 'genderLock')
+            this._lockRole();
+         else if (lock == 'bodyLock')
+            this._lockGender();
+         else if (lock == 'headLock')
+            this._lockHead();
+         else if (lock != 'nameLock')
+            this._lockBody();
       }
    },
 
-   _change_model: function(isNext, val)
+   _unlockGender: function()
    {
-      if (isNext)
-         val = val+1;
-      else
-         val = val-1;
-
-      return val;
+      this.$('#genderLock').attr('class', 'unlocked');
+      this._unlockBody();
    },
 
-   _set_values: function(data)
+   _unlockBody: function()
    {
-      if (data.body)
-         document.getElementById("bodyIndex").innerHTML = data.body;
+      //document.getElementById('bodyLock').className = 'unlocked';
+      this._unlockModels();
+   },
 
-      document.getElementById("headIndex").innerHTML       = data.head;
-      document.getElementById("eyebrowsIndex").innerHTML   = data.eyebrows;
-      document.getElementById("facialHairIndex").innerHTML = data.facial;
+   _unlockModels: function()
+   {
+      //TODO: unlock all misc models
+   },
+
+   _lockBody: function()
+   {
+      //document.getElementById('bodyLock').className = 'locked';
+      this._lockGender();
+   },
+
+   _lockGender: function()
+   {
+      this.$('#genderLock').attr('class', 'locked');
+      this._lockRole();
+   },
+
+   _lockRole: function()
+   {
+      //document.getElementById('roleLock').className = 'locked';
+   },
+
+   _genDefaultMapOptions: function()
+   {
+      return {
+         displayKeyPrefix: '',
+         displayKeyPostfix: '',
+         displayNamePrefix: '',
+         displayNamePostfix: '',
+      };
+   },
+
+   _modifyMap: function(map, sizes, options)
+   {
+      var self = this;
+      var locks = this._getLocks();
+      var new_map = {};
+
+      $.each(map, function(id, val)
+         {
+            if (options.strip)
+            {
+               var stripArr = options.strip.split('|');
+               $.each(stripArr, function(_, strip)
+                  {
+                     val = val.replace(RegExp(strip, 'g'), '');
+                  }
+               );
+            }
+
+            var lockStatus = 'unlocked';
+            if (locks[id])
+               lockStatus = locks[id];
+
+            new_map[id] = {
+               displayKey: options.displayKeyPrefix + self._makeReadable(id) + options.displayKeyPostfix,
+               displayName: options.displayNamePrefix + self._makeReadable(val) + options.displayNamePostfix,
+               key: id,
+               lockKey: id + 'Lock',
+               lockStatus: lockStatus,
+               multiple_choices: sizes[id] > 1,
+            };
+         }
+      );
+
+      return new_map;
+   },
+
+   _makeReadable: function(str)
+   {
+      if (str == null  ||  typeof str !== 'string')
+         return str;
+
+      var from = str.lastIndexOf('/');
+      var to   = str.lastIndexOf('.');
+
+      if (from !== -1  &&  to !== -1)
+         // Get a substring of the file's name without its extension.
+         str = str.substring(from+1, to);
+
+      // Replace underscores with a space.
+      str = str.replace(/_/g, ' ');
+
+      // Turn the first character of each word into upper case.
+      str = str.replace(/\w\S*/g, function(txt)
+         {
+            return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
+         }
+      );
+
+      return str;
    }
 });

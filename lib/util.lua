@@ -1,6 +1,7 @@
 local util = {}
 
 -- Produces a string; detailing the values in a table.
+--
 function util.table_tostring(value)
    local str = ''
    if type(value) == 'table' then
@@ -21,7 +22,8 @@ function util.table_tostring(value)
    return str
 end
 
--- Check if an element exists in table.
+-- Check if an element exists within table.
+--
 function util.contains(table, element)
    for _,value in pairs(table) do
       if value == element then
@@ -32,9 +34,30 @@ function util.contains(table, element)
    return false
 end
 
+-- Returns a table with unique values from `old_table`.
+-- `keep_keys` ensures that the keys used from `old_table` is kept,
+-- if not then the values will simply be inserted.
+--
+function util.only_unique_values(old_table, keep_keys)
+   local new_table = {}
+
+   for key, value in pairs(old_table) do
+      if not homf.util.contains(new_table, value) then
+         if keep_keys then
+            new_table[key] = value
+         else
+            table.insert(new_table, value)
+         end
+      end
+   end
+
+   return new_table
+end
+
 -- Increment/decrement an index.
 -- If that index points outside of its correspinding table,
 -- then have it point at the other end of the table.
+--
 function util.rotate_table_index(index, table_len, is_next)
    if type(table_len) == 'table' then
       table_len = #table_len

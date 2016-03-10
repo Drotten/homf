@@ -7,76 +7,59 @@
 
          <div>
             <div><input id="hearthlingName" type="text" onClick="this.select();" value="" /></div>
-            <div id="nameLock" class="unlocked" />
+            <div id="nameLock" class="unlocked" {{action "toggleLock" "nameLock" target=view}} />
          </div>
 
          <div>
             <table>
                <tr>
-                  <td><img src="../../../homf/ui/customize_hearthling/images/male.png"   id="maleButton"   class="genderButton" /></td>
-                  <td><img src="../../../homf/ui/customize_hearthling/images/female.png" id="femaleButton" class="genderButton" /></td>
+                  <td><img src="../../../homf/ui/customize_hearthling/images/male.png"   id="maleButton"   class="genderButton" {{action "setGender" "male"   target=view}} /></td>
+                  <td><img src="../../../homf/ui/customize_hearthling/images/female.png" id="femaleButton" class="genderButton" {{action "setGender" "female" target=view}} /></td>
                </tr>
             </table>
-            <div id="genderLock" class="unlocked" />
+            <div id="genderLock" class="unlocked" {{action "toggleLock" "genderLock" target=view}} />
          </div>
 
          <div>
             <table>
-               <tr id="role" class="visible">
-                  <td class="desc">
-                     {{i18n homf:ui.customize_hearthling.role}}
-                  </td>
-                  <td id="previousButton" class="changeRole" />
-                  <td id="roleIndex"      class="index" />
-                  <td id="nextButton"     class="changeRole" />
-                  <td id="roleLock"       class="unlocked" />
-               </tr>
+               {{#if view.multiple_roles}}
+                  <tr>
+                     <td class="desc">
+                        {{i18n homf:ui.customize_hearthling.role}}
+                     </td>
+                     <td id="previousButton" class="changeRole" {{action "nextRole" false target=view}} />
+                     <td id="role"           class="index"> {{view.role}} </td>
+                     <td id="nextButton"     class="changeRole" {{action "nextRole" true target=view}} />
+                     <td id="roleLock"       {{bind-attr class=view.roleLockStatus}} {{action "toggleLock" "roleLock" target=view}} />
+                  </tr>
+               {{/if}}
+               {{#each material_map in view.material_maps}}
+                  {{#if material_map.multiple_choices}}
+                     <tr>
+                        <td class="desc"> {{material_map.displayKey}} </td>
+                        <td id="previousButton" class="changeModel" {{action "nextMaterialMap" material_map.key false target=view}} />
+                        <td class="index" {{bind-attr id=material_map.key}}> {{material_map.displayName}} </td>
+                        <td id="nextButton" class="changeModel" {{action "nextMaterialMap" material_map.key true target=view}} />
+                        <td {{bind-attr id=material_map.lockKey class=material_map.lockStatus}} {{action "toggleLock" material_map.lockKey target=view}} />
+                     </tr>
+                  {{/if}}
+               {{/each}}
+               {{#each model in view.models}}
+                  {{#if model.multiple_choices}}
+                     <tr>
+                        <td class="desc"> {{model.displayKey}} </td>
+                        <td id="previousButton" class="changeModel" {{action "nextModel" model.key false target=view}} />
+                        <td class="index" {{bind-attr id=model.key}}> {{model.displayName}} </td>
+                        <td id="nextButton" class="changeModel" {{action "nextModel" model.key true target=view}} />
+                        <td {{bind-attr id=model.lockKey class=model.lockStatus}} {{action "toggleLock" model.lockKey target=view}} />
+                     </tr>
+                  {{/if}}
+               {{/each}}
             </table>
          </div>
 
          <div>
-            <table>
-               <tr id="body" class="visible">
-                  <td class="desc">
-                     {{i18n homf:ui.customize_hearthling.body}}
-                  </td>
-                  <td id="previousButton" class="changeBody" />
-                  <td id="bodyIndex"      class="index" />
-                  <td id="nextButton"     class="changeBody" />
-                  <td id="bodyLock"       class="unlocked" />
-               </tr>
-               <tr id="head" class="visible">
-                  <td class="desc">
-                     {{i18n homf:ui.customize_hearthling.head}}
-                  </td>
-                  <td id="previousButton" class="changeHead" />
-                  <td id="headIndex"      class="index" />
-                  <td id="nextButton"     class="changeHead" />
-                  <td id="headLock"       class="unlocked" />
-               </tr>
-               <tr id="eyebrows" class="visible">
-                  <td class="desc">
-                     {{i18n homf:ui.customize_hearthling.eyebrows}}
-                  </td>
-                  <td id="previousButton" class="changeEyebrows" />
-                  <td id="eyebrowsIndex"  class="index" />
-                  <td id="nextButton"     class="changeEyebrows" />
-                  <td id="eyebrowsLock"   class="unlocked" />
-               </tr>
-               <tr id="facialHair" class="visible">
-                  <td class="desc">
-                     {{i18n homf:ui.customize_hearthling.facial_hair}}
-                  </td>
-                  <td id="previousButton"  class="changeFacialHair" />
-                  <td id="facialHairIndex" class="index" />
-                  <td id="nextButton"      class="changeFacialHair" />
-                  <td id="facialHairLock"  class="unlocked" />
-               </tr>
-            </table>
-         </div>
-
-         <div>
-            <div id="randomButton" />
+            <div id="randomButton" {{action "randomize" target=view}} />
             <button class="ok" />
          </div>
       </div>

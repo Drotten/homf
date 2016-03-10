@@ -1,7 +1,7 @@
 {
    "info":
    {
-      "name"        : "Hearthlings of many faces",
+      "name"        : "Hearthlings of Many Faces",
       "description" : "Change your hearthlings' appearance to your preferences.",
       "version"     : 2
    },
@@ -41,27 +41,12 @@
          "controller" : "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"   : "server"
       },
-      "next_body":
+      "next_material_map":
       {
          "controller" : "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"   : "server"
       },
-      "next_head":
-      {
-         "controller" : "file(call_handlers/customizer_call_handler.lua)",
-         "endpoint"   : "server"
-      },
-      "next_eyebrows":
-      {
-         "controller" : "file(call_handlers/customizer_call_handler.lua)",
-         "endpoint"   : "server"
-      },
-      "next_facial":
-      {
-         "controller" : "file(call_handlers/customizer_call_handler.lua)",
-         "endpoint"   : "server"
-      },
-      "get_current_model_data":
+      "next_model":
       {
          "controller" : "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"   : "server"

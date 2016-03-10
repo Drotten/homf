@@ -25,36 +25,24 @@ function CustomizerCallHandler:randomize_hearthling(session, response, new_gende
    return customizer:randomize_hearthling(new_gender, locks)
 end
 
-function CustomizerCallHandler:next_role(session, response, is_next)
-   return customizer:next_role(is_next)
-end
-
-function CustomizerCallHandler:next_body(session, response, is_next)
-   return customizer:next_body(is_next)
-end
-
-function CustomizerCallHandler:next_head(session, response, is_next)
-   return customizer:next_head(is_next)
-end
-
-function CustomizerCallHandler:next_eyebrows(session, response, is_next)
-   return customizer:next_eyebrows(is_next)
-end
-
-function CustomizerCallHandler:next_facial(session, response, is_next)
-   return customizer:next_facial(is_next)
-end
-
 function CustomizerCallHandler:get_hearthling_name(session, response)
-   return {name = customizer:get_hearthling_name()}
+   return { name = customizer:get_hearthling_name() }
 end
 
 function CustomizerCallHandler:set_hearthling_name(session, response, name)
    customizer:set_hearthling_name(name)
 end
 
-function CustomizerCallHandler:get_current_model_data(session, response)
-   return customizer:get_current_model_data()
+function CustomizerCallHandler:next_role(session, response, is_next)
+   return customizer:next_role(is_next)
+end
+
+function CustomizerCallHandler:next_material_map(session, response, material_name, is_next)
+   return customizer:next_material_map(material_name, is_next)
+end
+
+function CustomizerCallHandler:next_model(session, response, model_name, is_next)
+   return customizer:next_model(model_name, is_next)
 end
 
 function CustomizerCallHandler:finish_customization(session, response)

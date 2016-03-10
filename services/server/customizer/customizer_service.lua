@@ -1,4 +1,4 @@
-local CustomizerService   = class()
+local CustomizerService = class()
 
 function CustomizerService:initialize()
    self._sv = self.__saved_variables:get_data()
@@ -57,32 +57,20 @@ function CustomizerService:randomize_hearthling(new_gender, locks)
    return self._sv.customize_hearthling:randomize_hearthling(new_gender, locks)
 end
 
-function CustomizerService:next_role(is_next)
-   return self._sv.customize_hearthling:next_role(is_next)
-end
-
-function CustomizerService:next_body(is_next)
-   return self._sv.customize_hearthling:next_body(is_next)
-end
-
-function CustomizerService:next_head(is_next)
-   return self._sv.customize_hearthling:next_head(is_next)
-end
-
-function CustomizerService:next_eyebrows(is_next)
-   return self._sv.customize_hearthling:next_eyebrows(is_next)
-end
-
-function CustomizerService:next_facial(is_next)
-   return self._sv.customize_hearthling:next_facial(is_next)
-end
-
 function CustomizerService:set_hearthling_name(name)
    return self._sv.customize_hearthling:set_hearthling_name(name)
 end
 
-function CustomizerService:get_current_model_data()
-   return self._sv.customize_hearthling:get_current_model_data()
+function CustomizerService:next_role(is_next)
+   return self._sv.customize_hearthling:next_role(is_next)
+end
+
+function CustomizerService:next_material_map(material_name, is_next)
+   return { material_map = self._sv.customize_hearthling:next_material_map(material_name, is_next) }
+end
+
+function CustomizerService:next_model(model_name, is_next)
+   return { model = self._sv.customize_hearthling:next_model(model_name, is_next) }
 end
 
 function CustomizerService:finish_customization()
@@ -144,7 +132,7 @@ function CustomizerService:_update()
    local hearthlings = {}
    local hearthlings_length = 0
 
-   for _,hearthling in pairs(self._pop:get_citizens()) do
+   for _,hearthling in self._pop:get_citizens():each() do
       hearthlings_length = hearthlings_length + 1
       table.insert(hearthlings, hearthling)
    end
