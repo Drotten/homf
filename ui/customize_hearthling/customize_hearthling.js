@@ -3,6 +3,13 @@ App.CustomizeHearthlingView = App.View.extend({
    classNames: ['flex', 'fullScreen'],
    closeOnEsc: false,
 
+   lockDependencies: {
+      1: [ 'roleLock' ],
+      2: [ 'genderLock' ],
+      3: [ 'bodyLock' ],
+      4: [ 'headLock' ],
+   },
+
    init: function()
    {
       this._super();
@@ -238,13 +245,48 @@ App.CustomizeHearthlingView = App.View.extend({
                options.strip = '_material_map';
                var material_maps = self._modifyMap(response.material_maps, response.sizes, options);
                self.set('material_maps', radiant.map_to_array(material_maps));
+
+               self._setupLocks();
             }
          );
    },
 
    _setupLocks: function()
    {
-      //TODO: Setup the locks so that when something is locked, it will also make sure to lock everything that it is dependent on (e.g. when locking a model, it will also have to lock the gender).
+      // Setup the locks so that when something is locked, it will also make sure to lock everything that
+      // it is dependent on (e.g. when locking a model, it will also have to lock the gender).
+      var self = this;
+      var variousDependencies = [];
+
+      radiant.each(this.get('models'), function(_, model)
+         {
+            var push = true;
+            radiant.each(self.lockDependencies, function(_, lockDepArr)
+               {
+                  radiant.each(lockDepArr, function(_, lockDep)
+                     {
+                        if (lockDep == model.lockKey)
+                        {
+                           push = false;
+                           return;
+                        }
+                     }
+                  );
+
+                  if (!push) return;
+               }
+            );
+            if (push)
+               variousDependencies.push(model.lockKey);
+         }
+      );
+      radiant.each(this.get('material_maps'), function(_, material_map)
+         {
+            variousDependencies.push(material_map.lockKey);
+         }
+      );
+
+      this.lockDependencies[5] = variousDependencies;
    },
 
    _getLocks: function()
@@ -298,61 +340,60 @@ App.CustomizeHearthlingView = App.View.extend({
    {
       radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
+      var self = this;
+
+      var lockOrder = 0;
+      radiant.each(this.lockDependencies, function(order, lockDepArr)
+         {
+            radiant.each(lockDepArr, function(_, lockDep)
+               {
+                  if (lockDep == lock)
+                  {
+                     lockOrder = parseInt(order);
+                     return;
+                  }
+               }
+            );
+
+            if (lockOrder > 0) return;
+         }
+      );
+
       this.$('#' + lock).attr('class', newStatus);
       if (newStatus == 'unlocked')
       {
-         if (lock == 'roleLock')
-            this._unlockGender();
-         else if (lock == 'genderLock')
-            this._unlockBody();
-         else if (lock == 'bodyLock')
-            this._unlockModels();
+         var size = this._getObjectSize(this.lockDependencies);
+         for (var i = lockOrder + 1; i <= size; ++i)
+         {
+            radiant.each(this.lockDependencies[i], function(_, lockDep)
+               {
+                  self.$('#' + lockDep).attr('class', newStatus);
+               }
+            );
+         }
       }
       else // (newStatus == 'locked')
       {
-         if (lock == 'genderLock')
-            this._lockRole();
-         else if (lock == 'bodyLock')
-            this._lockGender();
-         else if (lock == 'headLock')
-            this._lockHead();
-         else if (lock != 'nameLock')
-            this._lockBody();
+         for (var i = lockOrder - 1; i > 0; --i)
+         {
+            radiant.each(this.lockDependencies[i], function(_, lockDep)
+               {
+                  self.$('#' + lockDep).attr('class', newStatus);
+               }
+            );
+         }
       }
    },
 
-   _unlockGender: function()
+   _getObjectSize: function(obj)
    {
-      this.$('#genderLock').attr('class', 'unlocked');
-      this._unlockBody();
-   },
-
-   _unlockBody: function()
-   {
-      //document.getElementById('bodyLock').className = 'unlocked';
-      this._unlockModels();
-   },
-
-   _unlockModels: function()
-   {
-      //TODO: unlock all misc models
-   },
-
-   _lockBody: function()
-   {
-      //document.getElementById('bodyLock').className = 'locked';
-      this._lockGender();
-   },
-
-   _lockGender: function()
-   {
-      this.$('#genderLock').attr('class', 'locked');
-      this._lockRole();
-   },
-
-   _lockRole: function()
-   {
-      //document.getElementById('roleLock').className = 'locked';
+      var size = 0;
+      for (key in obj)
+      {
+         if (obj.hasOwnProperty(key))
+            ++size;
+      }
+      return size;
    },
 
    _genDefaultMapOptions: function()
