@@ -229,7 +229,7 @@ function CustomizeHearthling:_complement_gender_data(data)
    end
 end
 
-function CustomizeHearthling:randomize_hearthling(new_gender, locks)
+function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_ind)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
@@ -256,13 +256,15 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks)
       end
    end
 
-   -- Randomize role.
-   -- NOTE: if `new_gender` has a value, that means a new gender was
-   -- chosen by the player, thus the role is not randomized.
-   if not new_gender and self:_is_open(locks, 'role') then
+   -- Decide the new role.
+   -- NOTE: if `new_gender` has a value, that means a new gender was chosen by
+   -- the player, and since different roles can have different sets of genders, it's not randomized.
+   if new_role_ind then
+      self._role_ind = new_role_ind
+   elseif not new_gender and self:_is_open(locks, 'role') then
       self._role_ind = rng:get_int(1, #self._roles)
-      role_key = self._roles[self._role_ind]
    end
+   role_key = self._roles[self._role_ind]
 
    -- Decide the new gender.
    if new_gender then
@@ -319,26 +321,8 @@ function CustomizeHearthling:set_hearthling_name(name)
 end
 
 function CustomizeHearthling:next_role(is_next)
-   local role_key = self._roles[self._role_ind]
-   local gender   = self._gender
-
-   for model_key, model_table in pairs(self._models[role_key][gender]) do
-      self:_remove_model(model_table[self._indexes[model_key]])
-   end
-
-   self._role_ind = homf.util.rotate_table_index(self._role_ind, self._roles, is_next)
-   role_key       = self._roles[self._role_ind]
-
-   gender = self:_random_gender()
-   self:_switch_outfit()
-
-   local models = self:_randomize_models()
-
-   models.name   = self:_random_name()
-   models.role   = role_key
-   models.gender = gender
-
-   return models
+   local new_role_ind = homf.util.rotate_table_index(self._role_ind, self._roles, is_next)
+   return self:randomize_hearthling(nil, nil, new_role_ind)
 end
 
 function CustomizeHearthling:next_material_map(material_name, is_next)
@@ -380,25 +364,6 @@ function CustomizeHearthling:get_current_data()
    end
 
    return current_material_maps, current_models, self._roles[role_key]
-end
-
-function CustomizeHearthling:_randomize_models(locks)
-   local role_key = self._roles[self._role_ind]
-   local gender   = self._gender
-   local new_models = {}
-
-   for model_key, model_table in pairs(self._models[role_key][gender]) do
-      if self:_is_open(locks, model_key) then
-         local model_index = rng:get_int(1, radiant.size(model_table))
-         self._indexes[model_key] = model_index
-
-         local model = model_table[model_index]
-         self:_add_model(model)
-         new_models[model_key] = model
-      end
-   end
-
-   return new_models
 end
 
 function CustomizeHearthling:_random_gender(locks)

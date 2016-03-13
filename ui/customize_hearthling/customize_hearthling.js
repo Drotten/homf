@@ -112,8 +112,7 @@ App.CustomizeHearthlingView = App.View.extend({
          radiant.call('homf:next_role', isNext)
             .done(function(response)
                {
-                  var displayName = self._makeReadable(response.role);
-                  document.getElementById('role').innerHTML = displayName;
+                  self._processHearthlingData(response);
                }
             );
       },
@@ -221,34 +220,42 @@ App.CustomizeHearthlingView = App.View.extend({
       radiant.call('homf:randomize_hearthling', newGender, locks)
          .done(function(response)
             {
-               if (response.name)
-               {
-                  self.$('#hearthlingName').val(response.name);
-                  radiant.call('homf:set_hearthling_name', response.name);
-               }
-
-               if (response.role)
-               {
-                  self.set('multiple_roles', response.sizes.role > 1);
-                  self.set('role', self._makeReadable(response.role));
-                  var lockStatus = 'unlocked';
-                  if (locks  &&  locks.role)
-                     lockStatus = locks.role;
-                  self.set('roleLockStatus', lockStatus);
-               }
-
-               var options = self._genDefaultMapOptions();
-
-               var models = self._modifyMap(response.models, response.sizes, options);
-               self.set('models', radiant.map_to_array(models));
-
-               options.strip = '_material_map';
-               var material_maps = self._modifyMap(response.material_maps, response.sizes, options);
-               self.set('material_maps', radiant.map_to_array(material_maps));
-
-               self._setupLocks();
+               self._processHearthlingData(response, locks);
             }
          );
+   },
+
+   _processHearthlingData: function(data, locks)
+   {
+      if (!locks)
+         locks = this._getLocks();
+
+      if (data.name)
+      {
+         this.$('#hearthlingName').val(data.name);
+         radiant.call('homf:set_hearthling_name', data.name);
+      }
+
+      if (data.role)
+      {
+         this.set('multiple_roles', data.sizes.role > 1);
+         this.set('role', this._makeReadable(data.role));
+         var lockStatus = 'unlocked';
+         if (locks  &&  locks.role)
+            lockStatus = locks.role;
+         this.set('roleLockStatus', lockStatus);
+      }
+
+      var options = this._genDefaultMapOptions();
+
+      var models = this._modifyMap(data.models, data.sizes, options);
+      this.set('models', radiant.map_to_array(models));
+
+      options.strip = '_material_map';
+      var material_maps = this._modifyMap(data.material_maps, data.sizes, options);
+      this.set('material_maps', radiant.map_to_array(material_maps));
+
+      this._setupLocks();
    },
 
    _setupLocks: function()
