@@ -383,10 +383,12 @@ function CustomizeHearthling:_switch_material_maps(material_key, from_material_i
       to_material_map_table = from_material_map_table
    end
 
+   self._log:debug('removing material map %s', from_material_map_table[from_material_index])
    self._render_info:remove_material_map( from_material_map_table[from_material_index] )
 
    self._indexes[material_key] = to_material_index
    local new_material_map = to_material_map_table[to_material_index]
+   self._log:debug('adding material map %s', new_material_map)
    self._render_info:add_material_map(new_material_map)
 
    return new_material_map
@@ -397,10 +399,12 @@ function CustomizeHearthling:_switch_models(model_key, from_model_index, to_mode
       to_model_table = from_model_table
    end
 
+   self._log:debug('removing model %s', from_model_table[from_model_index])
    self:_remove_model( from_model_table[from_model_index] )
 
    self._indexes[model_key] = to_model_index
    local new_model = to_model_table[to_model_index]
+   self._log:debug('adding model %s', new_model)
    self:_add_model(new_model)
 
    -- Set the model variant to its default/female variant which will force the engine to display the new model.
