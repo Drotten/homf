@@ -102,7 +102,7 @@ function CustomizeHearthling:_get_model_data(gender)
       local models = {
          body = {},
          head = {},
-         hair = {},
+         hair = { 'bald' },
       }
 
       for body_ind, entities_uri in pairs(role_data[gender].uri) do
