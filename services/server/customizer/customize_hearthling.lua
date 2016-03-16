@@ -383,6 +383,11 @@ function CustomizeHearthling:_switch_material_maps(material_key, from_material_i
       to_material_map_table = from_material_map_table
    end
 
+   -- Don't switch between the same material maps.
+   if from_material_map_table[from_material_index] == to_material_map_table[to_material_index] then
+      return to_material_map_table[to_material_index]
+   end
+
    self._log:debug('removing material map %s', from_material_map_table[from_material_index])
    self._render_info:remove_material_map( from_material_map_table[from_material_index] )
 
@@ -397,6 +402,11 @@ end
 function CustomizeHearthling:_switch_models(model_key, from_model_index, to_model_index, from_model_table, to_model_table)
    if not to_model_table then
       to_model_table = from_model_table
+   end
+
+   -- Don't switch between the same models.
+   if from_model_table[from_model_index] == to_model_table[to_model_index] then
+      return to_model_table[to_model_index]
    end
 
    self._log:debug('removing model %s', from_model_table[from_model_index])
