@@ -175,16 +175,18 @@ App.CustomizeHearthlingView = App.View.extend({
                   self.set('role', self._makeReadable(response.role));
                   self.set('roleLockStatus', 'unlocked');
 
+                  self._resetLocks();
+
                   var options = self._genDefaultMapOptions();
 
-                  var models = self._modifyMap(response.models, response.sizes, options);
-                  self.set('models', radiant.map_to_array(models));
+                  var models = radiant.map_to_array( self._modifyMap(response.models, response.sizes, options) );
+                  self.set('models', models);
 
                   options.strip = '_material_map';
-                  var material_maps = self._modifyMap(response.material_maps, response.sizes, options);
-                  self.set('material_maps', radiant.map_to_array(material_maps));
+                  var material_maps = radiant.map_to_array( self._modifyMap(response.material_maps, response.sizes, options) );
+                  self.set('material_maps', material_maps);
 
-                  self._setupLocks();
+                  self._setupLocks([ models, material_maps ]);
 
                   if (self._zoom_to_hearthling)
                      radiant.call('homf:move_to_hearthling', hearthling);
@@ -220,6 +222,9 @@ App.CustomizeHearthlingView = App.View.extend({
       radiant.call('homf:randomize_hearthling', newGender, locks)
          .done(function(response)
             {
+               if (newGender)
+                  self._resetLocks(3);
+
                self._processHearthlingData(response, locks);
             }
          );
@@ -248,48 +253,66 @@ App.CustomizeHearthlingView = App.View.extend({
 
       var options = this._genDefaultMapOptions();
 
-      var models = this._modifyMap(data.models, data.sizes, options);
-      this.set('models', radiant.map_to_array(models));
+      var models = radiant.map_to_array( this._modifyMap(data.models, data.sizes, options) );
+      this.set('models', models);
 
       options.strip = '_material_map';
-      var material_maps = this._modifyMap(data.material_maps, data.sizes, options);
-      this.set('material_maps', radiant.map_to_array(material_maps));
+      var material_maps = radiant.map_to_array( this._modifyMap(data.material_maps, data.sizes, options) );
+      this.set('material_maps', material_maps);
 
-      this._setupLocks();
+      this._setupLocks([ models, material_maps ]);
    },
 
-   _setupLocks: function()
+   _resetLocks: function(startInd)
+   {
+      var self = this;
+
+      if (startInd == null)
+         startInd = 1;
+
+      var size = this._getObjectSize(this.lockDependencies);
+      for (var i = startInd; i <= size; ++i)
+      {
+         radiant.each(this.lockDependencies[i], function(_, lock)
+            {
+               self.$('#' + lock).attr('class', 'unlocked');
+            }
+         );
+      }
+   },
+
+   _setupLocks: function(componentsArr)
    {
       // Setup the locks so that when something is locked, it will also make sure to lock everything that
       // it is dependent on (e.g. when locking a model, it will also have to lock the gender).
       var self = this;
+      this.lockDependencies[5] = [];
       var variousDependencies = [];
 
-      radiant.each(this.get('models'), function(_, model)
+      radiant.each(componentsArr, function(_, components)
          {
-            var push = true;
-            radiant.each(self.lockDependencies, function(_, lockDepArr)
+            radiant.each(components, function(_, component)
                {
-                  radiant.each(lockDepArr, function(_, lockDep)
+                  var push = true;
+                  radiant.each(self.lockDependencies, function(_, lockDepArr)
                      {
-                        if (lockDep == model.lockKey)
-                        {
-                           push = false;
-                           return;
-                        }
+                        radiant.each(lockDepArr, function(_, lockDep)
+                           {
+                              if (lockDep == component.lockKey)
+                              {
+                                 push = false;
+                                 return;
+                              }
+                           }
+                        );
+
+                        if (!push) return;
                      }
                   );
-
-                  if (!push) return;
+                  if (push)
+                     variousDependencies.push(component.lockKey);
                }
             );
-            if (push)
-               variousDependencies.push(model.lockKey);
-         }
-      );
-      radiant.each(this.get('material_maps'), function(_, material_map)
-         {
-            variousDependencies.push(material_map.lockKey);
          }
       );
 
