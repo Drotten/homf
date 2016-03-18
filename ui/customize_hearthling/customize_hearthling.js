@@ -112,6 +112,7 @@ App.CustomizeHearthlingView = App.View.extend({
          radiant.call('homf:next_role', isNext)
             .done(function(response)
                {
+                  self._resetLocks(2);
                   self._processHearthlingData(response);
                }
             );
@@ -265,10 +266,10 @@ App.CustomizeHearthlingView = App.View.extend({
 
    _resetLocks: function(startInd)
    {
-      var self = this;
-
       if (startInd == null)
          startInd = 1;
+
+      var self = this;
 
       var size = this._getObjectSize(this.lockDependencies);
       for (var i = startInd; i <= size; ++i)
