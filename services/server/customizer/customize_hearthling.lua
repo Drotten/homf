@@ -428,13 +428,15 @@ function CustomizeHearthling:_switch_models(model_key, from_model_index, to_mode
 end
 
 function CustomizeHearthling:_add_model(model)
-   if not (model == 'nothing' or model == 'bald') then
+   if model ~= 'nothing' and model ~= 'bald' then
       self._model_variants:add_model(model)
    end
 end
 
 function CustomizeHearthling:_remove_model(model)
-   self._model_variants:remove_model(model)
+   if model ~= 'nothing' and model ~= 'bald' then
+      self._model_variants:remove_model(model)
+   end
 end
 
 function CustomizeHearthling:_switch_outfit()
