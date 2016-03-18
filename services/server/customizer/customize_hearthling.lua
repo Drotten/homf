@@ -409,12 +409,10 @@ function CustomizeHearthling:_switch_models(model_key, from_model_index, to_mode
       return to_model_table[to_model_index]
    end
 
-   self._log:debug('removing model %s', from_model_table[from_model_index])
    self:_remove_model( from_model_table[from_model_index] )
 
    self._indexes[model_key] = to_model_index
    local new_model = to_model_table[to_model_index]
-   self._log:debug('adding model %s', new_model)
    self:_add_model(new_model)
 
    -- Set the model variant to its default/female variant which will force the engine to display the new model.
@@ -429,12 +427,14 @@ end
 
 function CustomizeHearthling:_add_model(model)
    if model ~= 'nothing' and model ~= 'bald' then
+      self._log:debug('adding model %s', model)
       self._model_variants:add_model(model)
    end
 end
 
 function CustomizeHearthling:_remove_model(model)
    if model ~= 'nothing' and model ~= 'bald' then
+      self._log:debug('removing model %s', model)
       self._model_variants:remove_model(model)
    end
 end
@@ -476,12 +476,31 @@ function CustomizeHearthling:_detect_hearthlings_data()
    local role_key = self._roles[self._role_ind]
    local gender = self._gender
 
+   self._log:debug('finding models and material maps used by %s', tostring(self._customizing_hearthling))
+
+   -- Get the material maps used.
+   self._render_info:trace_material_maps('getting attached material maps')
+      :on_added(function(material)
+         for material_key, material_table in pairs(self._material_maps[role_key][gender]) do
+            for index, material_name in pairs(material_table) do
+               if material_name == material then
+                  self._log:debug('found material map "%s" for "%s"', material_name, material_key)
+                  self._indexes[material_key] = index
+                  return
+               end
+            end
+         end
+      end)
+      :push_object_state()
+      :destroy()
+
    -- Get the models used.
    self._model_variants:trace_models('getting attached models')
       :on_added(function(model)
          for model_key, model_table in pairs(self._models[role_key][gender]) do
             for index, model_name in pairs(model_table) do
                if model_name == model then
+                  self._log:debug('found model "%s" for "%s"', model_name, model_key)
                   self._indexes[model_key] = index
                   return
                end
@@ -492,27 +511,13 @@ function CustomizeHearthling:_detect_hearthlings_data()
       :destroy()
 
    -- In case the model used wasn't found (i.e. if it's set to 'nothing')
-   -- then fill in the blanks.
+   -- then fill in the blanks to make sure all the keys are registered in the UI.
    for model_key,_ in pairs(self._models[role_key][gender]) do
       if not self._indexes[model_key] then
+         self._log:debug('found model "nothing" for "%s"', model_key)
          self._indexes[model_key] = 1
       end
    end
-
-   -- Get the material maps used.
-   self._render_info:trace_material_maps('getting attached material maps')
-      :on_added(function(material)
-         for material_key, material_table in pairs(self._material_maps[role_key][gender]) do
-            for index, material_name in pairs(material_table) do
-               if material_name == material then
-                  self._indexes[material_key] = index
-                  return
-               end
-            end
-         end
-      end)
-      :push_object_state()
-      :destroy()
 end
 
 function CustomizeHearthling:_get_key_from_model(model)
