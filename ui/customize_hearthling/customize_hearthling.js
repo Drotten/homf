@@ -280,6 +280,8 @@ App.CustomizeHearthlingView = App.View.extend({
             }
          );
       }
+
+      this.$('#nameLock').attr('class', 'unlocked');
    },
 
    _setupLocks: function(componentsArr)
