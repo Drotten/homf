@@ -126,7 +126,7 @@ App.CustomizeHearthlingView = App.View.extend({
          radiant.call('homf:next_model', key, isNext)
             .done(function(response)
                {
-                  var displayName = self._makeReadable(response.model);
+                  var displayName = self._makeReadable(response.model, {});
                   document.getElementById(key).innerHTML = displayName;
                }
             );
@@ -140,8 +140,8 @@ App.CustomizeHearthlingView = App.View.extend({
          radiant.call('homf:next_material_map', key, isNext)
             .done(function(response)
                {
-                  var displayName = self._makeReadable(response.material_map);
-                  document.getElementById(key).innerHTML = displayName.replace(/ Material Map/g, '');
+                  var displayName = self._makeReadable(response.material_map, { strip: '_material_map|skin_|hair_' });
+                  document.getElementById(key).innerHTML = displayName;
                }
             );
       },
@@ -173,17 +173,17 @@ App.CustomizeHearthlingView = App.View.extend({
                   self.$('#hearthlingName').val(response.name);
 
                   self.set('multiple_roles', response.sizes.role > 1);
-                  self.set('role', self._makeReadable(response.role));
+                  self.set('role', self._makeReadable(response.role, {}));
                   self.set('roleLockStatus', 'unlocked');
 
                   self._resetLocks();
 
-                  var options = self._genDefaultMapOptions();
+                  var options = {};
 
                   var models = radiant.map_to_array( self._modifyMap(response.models, response.sizes, options) );
                   self.set('models', models);
 
-                  options.strip = '_material_map';
+                  options.displayNameStrip = '_material_map|skin_|hair_';
                   var material_maps = radiant.map_to_array( self._modifyMap(response.material_maps, response.sizes, options) );
                   self.set('material_maps', material_maps);
 
@@ -245,19 +245,19 @@ App.CustomizeHearthlingView = App.View.extend({
       if (data.role)
       {
          this.set('multiple_roles', data.sizes.role > 1);
-         this.set('role', this._makeReadable(data.role));
+         this.set('role', this._makeReadable(data.role, {}));
          var lockStatus = 'unlocked';
          if (locks  &&  locks.role)
             lockStatus = locks.role;
          this.set('roleLockStatus', lockStatus);
       }
 
-      var options = this._genDefaultMapOptions();
+      var options = {};
 
       var models = radiant.map_to_array( this._modifyMap(data.models, data.sizes, options) );
       this.set('models', models);
 
-      options.strip = '_material_map';
+      options.displayNameStrip = '_material_map|skin_|hair_';
       var material_maps = radiant.map_to_array( this._modifyMap(data.material_maps, data.sizes, options) );
       this.set('material_maps', material_maps);
 
@@ -429,16 +429,6 @@ App.CustomizeHearthlingView = App.View.extend({
       return size;
    },
 
-   _genDefaultMapOptions: function()
-   {
-      return {
-         displayKeyPrefix: '',
-         displayKeyPostfix: '',
-         displayNamePrefix: '',
-         displayNamePostfix: '',
-      };
-   },
-
    _modifyMap: function(map, sizes, options)
    {
       var self = this;
@@ -447,23 +437,25 @@ App.CustomizeHearthlingView = App.View.extend({
 
       $.each(map, function(id, val)
          {
-            if (options.strip)
-            {
-               var stripArr = options.strip.split('|');
-               $.each(stripArr, function(_, strip)
-                  {
-                     val = val.replace(RegExp(strip, 'g'), '');
-                  }
-               );
-            }
+            displayKeyOptions = {
+               prefix: options.displayKeyPrefix,
+               postfix: options.displayKeyPostfix,
+               strip: options.displayKeyStrip,
+            };
+
+            displayNameOptions = {
+               prefix: options.displayNamePrefix,
+               postfix: options.displayNamePostfix,
+               strip: options.displayNameStrip,
+            };
 
             var lockStatus = 'unlocked';
             if (locks[id])
                lockStatus = locks[id];
 
             new_map[id] = {
-               displayKey: options.displayKeyPrefix + self._makeReadable(id) + options.displayKeyPostfix,
-               displayName: options.displayNamePrefix + self._makeReadable(val) + options.displayNamePostfix,
+               displayKey: self._makeReadable(id, displayKeyOptions),
+               displayName: self._makeReadable(val, displayNameOptions),
                key: id,
                lockKey: id + 'Lock',
                lockStatus: lockStatus,
@@ -475,7 +467,7 @@ App.CustomizeHearthlingView = App.View.extend({
       return new_map;
    },
 
-   _makeReadable: function(str)
+   _makeReadable: function(str, options)
    {
       if (str == null  ||  typeof str !== 'string')
          return str;
@@ -487,6 +479,16 @@ App.CustomizeHearthlingView = App.View.extend({
          // Get a substring of the file's name without its extension.
          str = str.substring(from+1, to);
 
+      if (options.strip)
+      {
+         var stripArr = options.strip.split('|');
+         $.each(stripArr, function(_, strip)
+            {
+               str = str.replace(RegExp(strip, 'g'), '');
+            }
+         );
+      }
+
       // Replace underscores with a space.
       str = str.replace(/_/g, ' ');
 
@@ -497,6 +499,6 @@ App.CustomizeHearthlingView = App.View.extend({
          }
       );
 
-      return str;
+      return (options.prefix ? options.prefix : '') + str + (options.postfix ? options.postfix : '');
    }
 });
