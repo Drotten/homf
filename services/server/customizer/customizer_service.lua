@@ -57,6 +57,10 @@ function CustomizerService:randomize_hearthling(new_gender, locks)
    return self._sv.customize_hearthling:randomize_hearthling(new_gender, locks)
 end
 
+function CustomizerService:get_hearthling_name()
+   return self._sv.customize_hearthling:get_hearthling_name()
+end
+
 function CustomizerService:set_hearthling_name(name)
    self._sv.customize_hearthling:set_hearthling_name(name)
 end
