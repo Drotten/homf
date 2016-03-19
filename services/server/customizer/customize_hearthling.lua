@@ -296,6 +296,7 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
       local new_model_index = rng:get_int(1, #new_model_table)
       new_models[model_key] = self:_switch_models(model_key, model_data.old_index, new_model_index, model_data.old_table, new_model_table)
    end
+   self:_update_models()
 
    -- Randomize the name.
    if self:_is_open(locks, 'name') then
@@ -348,7 +349,10 @@ function CustomizeHearthling:next_model(model_name, is_next)
    local old_model_index = self._indexes[model_name]
    local new_model_index = homf.util.rotate_table_index(self._indexes[model_name], model_table, is_next)
 
-   return self:_switch_models(model_name, old_model_index, new_model_index, model_table)
+   local new_model = self:_switch_models(model_name, old_model_index, new_model_index, model_table)
+   self:_update_models()
+
+   return new_model
 end
 
 function CustomizeHearthling:get_current_data()
@@ -417,13 +421,6 @@ function CustomizeHearthling:_switch_models(model_key, from_model_index, to_mode
    local new_model = to_model_table[to_model_index]
    self:_add_model(new_model)
 
-   -- Set the model variant to its default/female variant which will force the engine to display the new model.
-   local variant = ''
-   if self._gender == 'female' then
-      variant = 'female'
-   end
-   self._render_info:set_model_variant(variant)
-
    return new_model
 end
 
@@ -439,6 +436,15 @@ function CustomizeHearthling:_remove_model(model)
       self._log:debug('removing model %s', model)
       self._model_variants:remove_model(model)
    end
+end
+
+function CustomizeHearthling:_update_models()
+   -- Set the model variant to its default/female variant which will force the engine to display the new model.
+   local variant = ''
+   if self._gender == 'female' then
+      variant = 'female'
+   end
+   self._render_info:set_model_variant(variant)
 end
 
 function CustomizeHearthling:_switch_outfit()
