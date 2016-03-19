@@ -38,11 +38,11 @@ function CustomizerCallHandler:next_role(session, response, is_next)
 end
 
 function CustomizerCallHandler:next_material_map(session, response, material_name, is_next)
-   return customizer:next_material_map(material_name, is_next)
+   return { material_map = customizer:next_material_map(material_name, is_next) }
 end
 
 function CustomizerCallHandler:next_model(session, response, model_name, is_next)
-   return customizer:next_model(model_name, is_next)
+   return { model = customizer:next_model(model_name, is_next) }
 end
 
 function CustomizerCallHandler:finish_customization(session, response)

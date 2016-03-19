@@ -31,7 +31,7 @@ function CustomizerService:_on_tracker_online(player_id)
 end
 
 function CustomizerService:try_customization(hearthling)
-   for _,customized_hearthling in pairs(self._sv.customized_hearthlings) do
+   for _, customized_hearthling in pairs(self._sv.customized_hearthlings) do
       if hearthling == customized_hearthling then
          return false
       end
@@ -49,7 +49,7 @@ end
 
 function CustomizerService:start_customization()
    local hearthling_data = self._sv.customize_hearthling:start_customization(self._sv.customizing_hearthling, self._continue)
-   self._continue        = false
+   self._continue = false
    return hearthling_data
 end
 
@@ -58,7 +58,7 @@ function CustomizerService:randomize_hearthling(new_gender, locks)
 end
 
 function CustomizerService:set_hearthling_name(name)
-   return self._sv.customize_hearthling:set_hearthling_name(name)
+   self._sv.customize_hearthling:set_hearthling_name(name)
 end
 
 function CustomizerService:next_role(is_next)
@@ -66,11 +66,11 @@ function CustomizerService:next_role(is_next)
 end
 
 function CustomizerService:next_material_map(material_name, is_next)
-   return { material_map = self._sv.customize_hearthling:next_material_map(material_name, is_next) }
+   return self._sv.customize_hearthling:next_material_map(material_name, is_next)
 end
 
 function CustomizerService:next_model(model_name, is_next)
-   return { model = self._sv.customize_hearthling:next_model(model_name, is_next) }
+   return self._sv.customize_hearthling:next_model(model_name, is_next)
 end
 
 function CustomizerService:finish_customization()
@@ -104,12 +104,12 @@ function CustomizerService:_get_unchecked_hearthling(hearthlings)
       if hearthling == self._sv.customizing_hearthling then
          return true
       end
-      for _,customized_hearthling in pairs(self._sv.customized_hearthlings) do
+      for _, customized_hearthling in pairs(self._sv.customized_hearthlings) do
          if hearthling == customized_hearthling then
             return true
          end
       end
-      for _,to_be_customized_hearthling in pairs(self._to_be_customized) do
+      for _, to_be_customized_hearthling in pairs(self._to_be_customized) do
          if hearthling == to_be_customized_hearthling then
             return true
          end
@@ -118,7 +118,7 @@ function CustomizerService:_get_unchecked_hearthling(hearthlings)
       return false
    end
 
-   for _,hearthling in pairs(hearthlings) do
+   for _, hearthling in pairs(hearthlings) do
 
       if not is_checked(hearthling) then
          return hearthling
@@ -132,7 +132,7 @@ function CustomizerService:_update()
    local hearthlings = {}
    local hearthlings_length = 0
 
-   for _,hearthling in self._pop:get_citizens():each() do
+   for _, hearthling in self._pop:get_citizens():each() do
       hearthlings_length = hearthlings_length + 1
       table.insert(hearthlings, hearthling)
    end
