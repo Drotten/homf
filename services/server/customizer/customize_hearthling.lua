@@ -15,8 +15,7 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
 
       local pop = stonehearth.population:get_population(customizing_hearthling)
       self._data = self:_load_faction_data(pop:get_kingdom())
-      self:_get_model_data('male')
-      self:_get_model_data('female')
+      self:_setup_data()
       self:_complement_gender_data(self._material_maps)
       self:_complement_gender_data(self._models)
    end
@@ -88,140 +87,144 @@ function CustomizeHearthling:_load_faction_data(faction_uri)
    return data
 end
 
-function CustomizeHearthling:_get_model_data(gender)
-   for role_key, role_data in pairs(self._data.roles) do
-      if not role_data[gender] then
-         return
-      end
+function CustomizeHearthling:_setup_data()
+   local genders = { 'male', 'female' }
 
-      local material_map_keys = { 'skin', 'hair', }
-      local material_maps = {
-         skin_color = {},
-         hair_color = {},
-      }
-      local models = {
-         body = {},
-         head = {},
-         hair = { 'bald' },
-      }
+   for _, gender in pairs(genders) do
+      for role_key, role_data in pairs(self._data.roles) do
+         if not role_data[gender] then
+            break
+         end
 
-      for body_ind, entities_uri in pairs(role_data[gender].uri) do
-         local hearthling_json = radiant.resources.load_json(entities_uri)
-         local entity_material_maps = hearthling_json.components.render_info.material_maps
-         local entity_default_models = hearthling_json.components.model_variants.default.models
-         local entity_custom_variants = hearthling_json.entity_data['stonehearth:customization_variants'] or {}
+         local material_map_keys = { 'skin', 'hair', }
+         local material_maps = {
+            skin_color = {},
+            hair_color = {},
+         }
+         local models = {
+            body = {},
+            head = {},
+            hair = { 'bald' },
+         }
 
-         -- Get all material maps.
-         for _,material_map_data in pairs(entity_material_maps) do
-            if type(material_map_data) == 'string' then
-               material_map_data = { items = {material_map_data} }
+         for _, entities_uri in pairs(role_data[gender].uri) do
+            local hearthling_json = radiant.resources.load_json(entities_uri)
+            local entity_material_maps = hearthling_json.components.render_info.material_maps
+            local entity_default_models = hearthling_json.components.model_variants.default.models
+            local entity_custom_variants = hearthling_json.entity_data['stonehearth:customization_variants'] or {}
+
+            -- Get all material maps.
+            for _, material_map_data in pairs(entity_material_maps) do
+               if type(material_map_data) == 'string' then
+                  material_map_data = { items = {material_map_data} }
+               end
+
+               for _, material_map in pairs(material_map_data.items) do
+                  local added = false
+                  -- Add the material maps in their appropiate table (i.e. skin, and hair).
+                  for _, material_map_key in pairs(material_map_keys) do
+
+                     local file_name_start = material_map:find('/[^/]*$') or 1
+                     if material_map:find(material_map_key, file_name_start) then
+
+                        material_map_key = material_map_key .. '_color'
+                        if not homf.util.contains(material_maps[material_map_key], material_map) then
+                           self._log:detail('adding "%s" among the "%s" material maps for %ss', material_map, material_map_key, gender)
+                           table.insert(material_maps[material_map_key], material_map)
+                        else
+                           self._log:spam('"%s" has already been added among the "%s" material maps for %ss', material_map, material_map_key, gender)
+                        end
+
+                        added = true
+                        break
+                     end
+                  end
+
+                  if not added then
+                     self._log:warning('unable to find a suitable table for "%s" (by using %s)', material_map, material_map:match('/[^/]*$'))
+                  end
+               end
             end
 
-            for _,material_map in pairs(material_map_data.items) do
-               local added = false
-               -- Add the material maps in their appropiate table (i.e. skin, and hair).
-               for _,material_map_key in pairs(material_map_keys) do
+            -- Get the models from the model_variants component.
+            for _, model_data in pairs(entity_default_models) do
+               if type(model_data) == 'string' then
+                  model_data = { items = {model_data} }
+               end
 
-                  local file_name_start = material_map:find('/[^/]*$') or 1
-                  if material_map:find(material_map_key, file_name_start) then
+               for _, model in pairs(model_data.items) do
 
-                     material_map_key = material_map_key .. '_color'
-                     if not homf.util.contains(material_maps[material_map_key], material_map) then
-                        self._log:detail('adding "%s" among the "%s" material maps for %ss', material_map, material_map_key, gender)
-                        table.insert(material_maps[material_map_key], material_map)
-                     else
-                        self._log:spam('"%s" has already been added among the "%s" material maps for %ss', material_map, material_map_key, gender)
-                     end
+                  local model_name = self:_get_key_from_model(model)
+                  if not models[model_name] then
+                     models[model_name] = {}
+                  end
 
-                     added = true
-                     break
+                  if not homf.util.contains(models[model_name], model) then
+                     self._log:detail('adding "%s" among the "%s" models for %ss', model, model_name, gender)
+                     table.insert(models[model_name], model)
+                  else
+                     self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_name, gender)
+                  end
+               end
+            end
+
+            -- Get the models from entity data.
+            for variants_name, variants_data in pairs(entity_custom_variants) do
+               -- alt 1. store all the models from `variants_data.models` to `variants_name` as their key.
+               --        (ignore the keys that lack models)
+               --        (make an exception for the hair models so as they aren't stored among different keys,
+               --         resulting in two hair models loaded on a hearthling)
+               for _, model in pairs(variants_data.models or {}) do
+                  local model_key = variants_name
+                  -- To avoid the hearthling from having two hair models simultaneously:
+                  -- set the key to 'hair' if it's either 'old' or 'young'.
+                  if model_key == 'old' or model_key == 'young' then
+                     model_key = 'hair'
+                  end
+
+                  if not models[model_key] then
+                     models[model_key] = { 'nothing' }
+                  end
+
+                  if not homf.util.contains(models[model_key], model) then
+                     self._log:detail('adding "%s" among the "%s" models for %ss', model, model_key, gender)
+                     table.insert(models[model_key], model)
+                  else
+                     self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_key, gender)
                   end
                end
 
-               if not added then
-                  self._log:warning('unable to find a suitable table for "%s" (by using %s)', material_map, material_map:match('/[^/]*$'))
-               end
+               -- alt 2. make a connection from `variants.root.variants` to subsequent
+               --        models and their own variants.
+               --        (ignore the keys that lack models)
             end
          end
 
-         -- Get the models from the model_variants component.
-         for _,model_data in pairs(entity_default_models) do
-            if type(model_data) == 'string' then
-               model_data = { items = {model_data} }
-            end
-
-            for _,model in pairs(model_data.items) do
-
-               local model_name = self:_get_key_from_model(model)
-               if not models[model_name] then
-                  models[model_name] = {}
-               end
-
-               if not homf.util.contains(models[model_name], model) then
-                  self._log:detail('adding "%s" among the "%s" models for %ss', model, model_name, gender)
-                  table.insert(models[model_name], model)
-               else
-                  self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_name, gender)
-               end
-            end
+         if not homf.util.contains(self._roles, role_key) then
+            table.insert(self._roles, role_key)
          end
 
-         -- Get the models from entity data.
-         for variants_name, variants_data in pairs(entity_custom_variants) do
-            -- alt 1. store all the models from `variants_data.models` to `variants_name` as their key.
-            --        (ignore the keys that lack models)
-            --        (make an exception for the hair models so as they aren't stored among different keys,
-            --         resulting in two hair models loaded on a hearthling)
-            for _,model in pairs(variants_data.models or {}) do
-               local model_key = variants_name
-               -- To avoid the hearthling from having two hair models simultaneously:
-               -- set the key to 'hair' if it's either 'old' or 'young'.
-               if model_key == 'old' or model_key == 'young' then
-                  model_key = 'hair'
-               end
-
-               if not models[model_key] then
-                  models[model_key] = { 'nothing' }
-               end
-
-               if not homf.util.contains(models[model_key], model) then
-                  self._log:detail('adding "%s" among the "%s" models for %ss', model, model_key, gender)
-                  table.insert(models[model_key], model)
-               else
-                  self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_key, gender)
-               end
-            end
-
-            -- alt 2. make a connection from `variants.root.variants` to subsequent
-            --        models and their own variants.
-            --        (ignore the keys that lack models)
+         if not self._material_maps[role_key] then
+            self._material_maps[role_key] = {}
          end
-      end
+         if not self._models[role_key] then
+            self._models[role_key] = {}
+         end
 
-      if not homf.util.contains(self._roles, role_key) then
-         table.insert(self._roles, role_key)
+         self._material_maps[role_key][gender] = material_maps
+         self._models[role_key][gender] = models
       end
-
-      if not self._material_maps[role_key] then
-         self._material_maps[role_key] = {}
-      end
-      if not self._models[role_key] then
-         self._models[role_key] = {}
-      end
-
-      self._material_maps[role_key][gender] = material_maps
-      self._models[role_key][gender] = models
    end
 end
 
 function CustomizeHearthling:_complement_gender_data(data)
-   for _,role_models in pairs(data) do
-      for model_key,_ in pairs(role_models.male) do
+   for _, role_models in pairs(data) do
+      for model_key, _ in pairs(role_models.male) do
          if not role_models.female[model_key] then
             role_models.female[model_key] = { 'nothing' }
          end
       end
-      for model_key,_ in pairs(role_models.female) do
+      for model_key, _ in pairs(role_models.female) do
          if not role_models.male[model_key] then
             role_models.male[model_key] = { 'nothing' }
          end
@@ -246,7 +249,6 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
          }
       end
    end
-
    for model_key, model_table in pairs(self._models[role_key][gender]) do
       if self:_is_open(locks, model_key) then
          switch_models_data[model_key] = {
@@ -512,7 +514,7 @@ function CustomizeHearthling:_detect_hearthlings_data()
 
    -- In case the model used wasn't found (i.e. if it's set to 'nothing')
    -- then fill in the blanks to make sure all the keys are registered in the UI.
-   for model_key,_ in pairs(self._models[role_key][gender]) do
+   for model_key, _ in pairs(self._models[role_key][gender]) do
       if not self._indexes[model_key] then
          self._log:debug('found model "nothing" for "%s"', model_key)
          self._indexes[model_key] = 1
