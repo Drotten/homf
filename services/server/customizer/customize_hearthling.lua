@@ -60,8 +60,6 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
       hearthling_values.models[model_key] = model_table[ self._indexes[model_key] ]
    end
 
-   self._curr_gender = gender
-
    hearthling_values.name   = self:get_hearthling_name()
    hearthling_values.gender = gender
    hearthling_values.role   = role_key
@@ -320,11 +318,9 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
    if new_gender then
       gender = new_gender
    else
-      gender = self:_random_gender(locks)
+      gender = self:_get_random_gender(locks)
    end
    self._gender = gender
-
-   self:_switch_outfit()
 
    -- Define some variables. Get copy of the current models and materials used, which will later
    -- be replaced by the newly randomized ones (assuming they're not locked).
@@ -420,16 +416,18 @@ function CustomizeHearthling:get_current_data()
    return current_material_maps, current_models, self._roles[role_key]
 end
 
-function CustomizeHearthling:_random_gender(locks)
+function CustomizeHearthling:_get_random_gender(locks)
+   local new_gender = self._gender
+
    if self:_is_open(locks, 'gender') then
       if rng:get_int(1,2) == 1 then
-         self._gender = 'female'
+         new_gender = 'female'
       else
-         self._gender = 'male'
+         new_gender = 'male'
       end
    end
 
-   return self._gender
+   return new_gender
 end
 
 function CustomizeHearthling:_switch_material_maps(material_key, from_material_index, to_material_index, from_material_map_table, to_material_map_table)
@@ -493,25 +491,6 @@ function CustomizeHearthling:_update_models()
       variant = 'female'
    end
    self._render_info:set_model_variant(variant)
-end
-
-function CustomizeHearthling:_switch_outfit()
-   -- Switch to a different outfit for the current job
-   if self._curr_gender ~= self._gender then
-      local render_info_component = self._customizing_hearthling:get_component('render_info')
-      -- Change render_info component to reflect the new gender
-
-      --NOTE: for some reason the shoulders gets an offset when animation table is changed; doesn't seem to do any harm to not change it, keep like this?
-      --      could be related to the models skeleton, if so it should be changed as well...
-      --render_info_component:set_animation_table('stonehearth:skeletons:humanoid:'..self._gender)
-      local new_model_variant = ''
-      if self._gender == 'female' then
-         new_model_variant = self._gender
-      end
-      render_info_component:set_model_variant(new_model_variant)
-
-      self._curr_gender = self._gender
-   end
 end
 
 function CustomizeHearthling:_random_name()
