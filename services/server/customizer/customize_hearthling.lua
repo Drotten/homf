@@ -96,7 +96,7 @@ function CustomizeHearthling:_setup_data()
             break
          end
 
-         local material_map_keys = { 'skin', 'hair', }
+         local material_map_keys = { 'skin', 'hair' }
          local material_maps = {
             skin_color = {},
             hair_color = {},
