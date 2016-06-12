@@ -2,16 +2,11 @@ local CustomizerService = class()
 
 function CustomizerService:initialize()
    self._sv = self.__saved_variables:get_data()
-   self._to_be_customized = {}
+   self._log = radiant.log.create_logger('homf.service')
+   self._awaiting_customization = {}
 
-   if self._sv.initialized then
-      self._pop_count = #self._sv.customized_hearthlings
-   else
-      self._sv.initialized = true
+   if not self._sv.customized_hearthlings then
       self._sv.customized_hearthlings = {}
-      self._pop_count = 0
-
-      self.__saved_variables:mark_changed()
    end
 
    radiant.events.listen_once(self, 'homf:tracker_online', self, self._on_tracker_online)
@@ -24,10 +19,47 @@ function CustomizerService:_on_tracker_online(player_id)
    if self._sv.customizing_hearthling then
       self._continue = true
       radiant.events.trigger_async(homf.customizer, 'homf:customize', { hearthling = self._sv.customizing_hearthling })
+   else
+      self:_setup_customizer()
    end
 
+   self._log:debug('homf service up and running!')
    self.__saved_variables:mark_changed()
-   self:_start_update_timer()
+end
+
+function CustomizerService:_setup_customizer()
+   -- The citizens that are there at first are the embarking ones,
+   -- and start customizing them if the setting is set to true.
+   local customize = radiant.util.get_config('customize_embarking', true)
+   local citizens = self._pop:get_citizens()
+   for _, citizen in citizens:each() do
+      if customize then
+         self:force_customization(citizen)
+      else
+         table.insert(self._sv.customized_hearthlings, citizen:get_id())
+      end
+   end
+
+   radiant.events.listen(self._pop, "homf:population:citizen_added", self, self._on_citizen_added)
+   radiant.events.listen(self._pop, "homf:population:citizen_removed", self, self._on_citizen_removed)
+end
+
+function CustomizerService:_on_citizen_added(args)
+   local citizen = args.citizen
+   local citizen_id = citizen:get_id()
+   if radiant.util.get_config('customize_immigrating', true) then
+      self:force_customization(citizen)
+   else
+      table.insert(self._sv.customized_hearthlings, citizen_id)
+      self.__saved_variables:mark_changed()
+   end
+end
+
+function CustomizerService:_on_citizen_removed(args)
+   local citizen_id = args.entity_id
+
+   table.remove(self._sv.customized_hearthlings, citizen_id)
+   self.__saved_variables:mark_changed()
 end
 
 function CustomizerService:try_customization(hearthling)
@@ -37,13 +69,13 @@ function CustomizerService:try_customization(hearthling)
       end
    end
 
-   table.insert(self._to_be_customized, hearthling)
+   table.insert(self._awaiting_customization, hearthling)
    self:_init_customization()
    return true
 end
 
 function CustomizerService:force_customization(hearthling)
-   table.insert(self._to_be_customized, hearthling)
+   table.insert(self._awaiting_customization, hearthling)
    self:_init_customization()
 end
 
@@ -85,7 +117,7 @@ function CustomizerService:finish_customization()
    self._sv.customizing_hearthling = nil
    self.__saved_variables:mark_changed()
 
-   if #self._to_be_customized > 0 then
+   if #self._awaiting_customization > 0 then
       self:_init_customization()
    end
 end
@@ -96,85 +128,10 @@ function CustomizerService:_init_customization()
    end
 
    -- Pre customization setup
-   self._sv.customizing_hearthling = table.remove(self._to_be_customized)
+   self._sv.customizing_hearthling = table.remove(self._awaiting_customization)
    self.__saved_variables:mark_changed()
 
-   radiant.events.trigger_async(homf.customizer, 'homf:customize', {hearthling = self._sv.customizing_hearthling})
-end
-
-function CustomizerService:_get_unchecked_hearthling(hearthlings)
-
-   local function is_checked(hearthling)
-      if hearthling == self._sv.customizing_hearthling then
-         return true
-      end
-      for _, customized_hearthling in pairs(self._sv.customized_hearthlings) do
-         if hearthling == customized_hearthling then
-            return true
-         end
-      end
-      for _, to_be_customized_hearthling in pairs(self._to_be_customized) do
-         if hearthling == to_be_customized_hearthling then
-            return true
-         end
-      end
-
-      return false
-   end
-
-   for _, hearthling in pairs(hearthlings) do
-
-      if not is_checked(hearthling) then
-         return hearthling
-      end
-   end
-
-   return nil
-end
-
-function CustomizerService:_update()
-   local hearthlings = {}
-   local hearthlings_length = 0
-
-   for _, hearthling in self._pop:get_citizens():each() do
-      hearthlings_length = hearthlings_length + 1
-      table.insert(hearthlings, hearthling)
-   end
-
-   while self._pop_count < hearthlings_length do
-      self._pop_count = self._pop_count + 1
-
-      local hearthling = self:_get_unchecked_hearthling(hearthlings)
-      if hearthling then
-         local customize = true
-
-         --TODO: need a fool-proof way to determine which ones are actually embarking and which ones are immigrating
-         if self._pop_count <= 7 then
-            customize = radiant.util.get_config('customize_embarking', true)
-         else
-            customize = radiant.util.get_config('customize_immigrating', true)
-         end
-
-         if customize then
-            self:force_customization(hearthling)
-         else
-            table.insert(self._sv.customized_hearthlings, hearthling)
-            self.__saved_variables:mark_changed()
-         end
-      end
-   end
-
-   if #self._to_be_customized > 0 then
-      self:_init_customization()
-   end
-end
-
-function CustomizerService:_start_update_timer(e)
-   radiant.set_realtime_timer("CustomizerService _start_update_timer", 500,
-      function()
-         self:_start_update_timer()
-         self:_update()
-      end)
+   radiant.events.trigger_async(homf.customizer, 'homf:customize', { hearthling = self._sv.customizing_hearthling })
 end
 
 return CustomizerService

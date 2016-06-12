@@ -1,6 +1,12 @@
 homf = {}
 homf.util = require('lib.util')
 
+local function monkey_of_many_faces()
+   local pop_fac = radiant.mods.require('stonehearth.services.server.population.population_faction')
+   local homf_pop_fac = require('services.server.population.population_faction')
+   radiant.mixin(pop_fac, homf_pop_fac)
+end
+
 local function create_service(name)
    local path = string.format('services.server.%s.%s_service', name, name)
    local service = require(path)()
@@ -20,6 +26,7 @@ end
 
 function homf:_on_required_loaded()
    homf._sv = homf.__saved_variables:get_data()
+   monkey_of_many_faces()
    create_service('customizer')
 end
 
