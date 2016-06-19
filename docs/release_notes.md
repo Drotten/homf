@@ -1,3 +1,10 @@
+### Version 1.1.2
+
+- **Improvement** - Improved on the lock system.
+- **Improvement** - The gender buttons are now bigger and with a border.
+- **Bug fix** - Hearthlings dying is no longer an issue... well, for this mod at least.
+
+
 ### Version 1.1.1
 
 - **Compatibility** - Made the mod compatible with Stonehearth Alpha 14.
