@@ -88,6 +88,8 @@ App.CustomizeHearthlingView = App.View.extend({
             self.hide();
          }
       );
+
+      this._updateTooltips();
    },
 
    actions:
@@ -264,6 +266,31 @@ App.CustomizeHearthlingView = App.View.extend({
       this._setupLocks([ models, material_maps ]);
    },
 
+   _updateTooltips: function()
+   {
+      var self = this;
+      var ttPath = "homf:ui.data.tooltips.";
+
+      var buttons = ["maleButton", "femaleButton", "randomButton", "nextButton", "previousButton"];
+      radiant.each(buttons, function(i, button)
+         {
+            var description = i18n.t(ttPath + button + ".description");
+            self.$('#' + button).tooltipster({content: description});
+         }
+      );
+
+      var size = this._getObjectSize(this.lockDependencies);
+      var description = i18n.t(ttPath + "lock.description");
+      for (var i = 1; i <= size; i+=1)
+      {
+         radiant.each(this.lockDependencies[i], function(_, lock)
+            {
+               self.$('#' + lock).tooltipster({content: description});
+            }
+         );
+      }
+   },
+
    _resetLocks: function(startInd)
    {
       if (startInd == null)
@@ -272,7 +299,7 @@ App.CustomizeHearthlingView = App.View.extend({
       var self = this;
 
       var size = this._getObjectSize(this.lockDependencies);
-      for (var i = startInd; i <= size; ++i)
+      for (var i = startInd; i <= size; i+=1)
       {
          radiant.each(this.lockDependencies[i], function(_, lock)
             {
@@ -396,7 +423,7 @@ App.CustomizeHearthlingView = App.View.extend({
       if (newStatus == 'unlocked')
       {
          var size = this._getObjectSize(this.lockDependencies);
-         for (var i = lockOrder + 1; i <= size; ++i)
+         for (var i = lockOrder + 1; i <= size; i+=1)
          {
             radiant.each(this.lockDependencies[i], function(_, lockDep)
                {

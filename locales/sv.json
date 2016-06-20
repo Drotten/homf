@@ -1,10 +1,30 @@
 {
-   "ui":
-   {
-      "customize_hearthling":
-      {
+   "ui": {
+      "customize_hearthling": {
          "title" : "Ändra utseendet",
          "role"  : "Roll"
+      },
+      "data": {
+         "tooltips": {
+            "nextButton": {
+               "description": "Välj nästa i listan."
+            },
+            "previousButton": {
+               "description": "Välj föregående i listan."
+            },
+            "maleButton": {
+               "description": "Bli en man, kommer även slumpa fram alla modeller samt färger."
+            },
+            "femaleButton": {
+               "description": "Bli en kvinna, kommer även slumpa fram alla modeller samt färger."
+            },
+            "randomButton": {
+               "description": "Slumpa alla delar som inte är låsta."
+            },
+            "lock": {
+               "description": "Lås denna del så att det inte kan bli slumpad."
+            }
+         }
       }
    }
 }
