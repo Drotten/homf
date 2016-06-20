@@ -1,7 +1,8 @@
 ### Version 1.1.2
 
 - **Improvement** - Improved on the lock system.
-- **Improvement** - The gender buttons are now bigger and with a border.
+- **Improvement** - The gender buttons have been made bigger and with a border.
+- **Improvement** - Added tooltips to certain buttons for the customization ui.
 - **Bug fix** - Hearthlings dying is no longer an issue... well, for this mod at least.
 
 
