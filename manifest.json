@@ -1,16 +1,14 @@
 {
-   "info":
-   {
+   "info": {
       "name"        : "Hearthlings of Many Faces",
       "description" : "Change your hearthlings' appearance to your preferences.",
-      "version"     : 2
+      "version"     : 3
    },
 
    "default_locale"     : "en",
    "server_init_script" : "file(server_init)",
 
-   "functions":
-   {
+   "functions": {
       "get_tracker":
       {
          "controller" : "file(call_handlers/customizer_call_handler.lua)",
@@ -74,29 +72,23 @@
       }
    },
 
-   "controllers":
-   {
+   "controllers": {
       "customizer:customize_hearthling" : "file(services/server/customizer/customize_hearthling.lua)"
    },
 
-   "client_controllers":
-   {
+   "client_controllers": {
       "move_rotate_to_camera_controller" : "file(camera/move_rotate_to_camera_controller.lua)"
    },
 
-   "ui":
-   {
-      "js":
-      [
+   "ui": {
+      "js": [
          "file(ui/init.js)",
          "file(ui/customize_hearthling/customize_hearthling.js)"
       ],
-      "html":
-      [
+      "html": [
          "file(ui/customize_hearthling/customize_hearthling.html)"
       ],
-      "less":
-      [
+      "less": [
          "file(ui/customize_hearthling/customize_hearthling.less)"
       ]
    }
