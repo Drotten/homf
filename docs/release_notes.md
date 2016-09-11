@@ -1,3 +1,10 @@
+### Version 1.1.3
+
+- **Update** - Updated for SH Alpha 18.
+- **Feature** - Hitting the esc key will close the window as if hitting the 'ok' button.
+- **Bug fix** - No longer customizes same hearthlings again when loading a save.
+
+
 ### Version 1.1.2
 
 - **Improvement** - Improved on the lock system.
