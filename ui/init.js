@@ -35,6 +35,52 @@ $(top).on('stonehearthReady', function(cc)
       });
    });
 
-   // The app will be added after the town name has been decided.
-   App.gameView.views.complete.push('CustomizeHearthlingView');
+   var HomfCustomizer;
+
+   (function() {
+      HomfCustomizer = SimpleClass.extend({
+
+         init: function()
+         {
+            var self = this;
+
+            radiant.call('homf:get_tracker')
+               .done(function(response)
+                  {
+                     self.trace = radiant.trace(response.tracker)
+                        .progress(function(data)
+                           {
+                              self.startCustomization(data.hearthling);
+                           }
+                        )
+                        .fail(function(e)
+                           {
+                              console.log(e);
+                           }
+                        );
+                  }
+               );
+         },
+
+         startCustomization: function(hearthling)
+         {
+            App.stonehearthClient.showHomfCustomizer(hearthling);
+         }
+      });
+
+      App.stonehearthClient._homfCustomizeHearthling = null;
+      App.stonehearthClient.showHomfCustomizer = function(hearthling)
+      {
+         // toggle the town menu
+         if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
+            this._homfCustomizeHearthling = App.gameView.addView(App.CustomizeHearthlingView);
+            this._homfCustomizeHearthling.startCustomization(hearthling);
+         } else {
+            this._homfCustomizeHearthling.destroy();
+            this._homfCustomizeHearthling = null;
+         }
+      };
+
+      App.homfCustomizer = new HomfCustomizer();
+   })();
 });

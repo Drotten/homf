@@ -1,7 +1,7 @@
 App.CustomizeHearthlingView = App.View.extend({
    templateName: 'customizeHearthling',
    classNames: ['flex', 'fullScreen'],
-   closeOnEsc: false,
+   closeOnEsc: true,
 
    lockDependencies: {
       1: [ 'roleLock' ],
@@ -29,23 +29,6 @@ App.CustomizeHearthlingView = App.View.extend({
                self._zoom_to_hearthling = cfg['zoom_to_hearthling'];
                if (self._zoom_to_hearthling == null)
                   self._zoom_to_hearthling = true;
-            }
-         );
-
-      radiant.call('homf:get_tracker')
-         .done(function(response)
-            {
-               self.trace = radiant.trace(response.tracker)
-                  .progress(function(data)
-                     {
-                        self.startCustomization(data.hearthling);
-                     }
-                  )
-                  .fail(function(e)
-                     {
-                        console.log(e);
-                     }
-                  );
             }
          );
    },
@@ -81,11 +64,7 @@ App.CustomizeHearthlingView = App.View.extend({
 
       this.$('.ok').click(function()
          {
-            radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:trigger_click'} );
-
-            radiant.call('homf:finish_customization');
-            radiant.call('stonehearth:dm_resume_game');
-            self.hide();
+            self.destroy();
          }
       );
 
@@ -156,16 +135,24 @@ App.CustomizeHearthlingView = App.View.extend({
 
    destroy: function()
    {
+      if (this._hearthling) {
+         radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:trigger_click'} );
+
+         radiant.call('homf:finish_customization');
+         radiant.call('stonehearth:dm_resume_game');
+      }
+
+      this._hearthling = null;
       this._super();
-      this.trace.destroy();
    },
 
    startCustomization: function(hearthling)
    {
       if (hearthling != null)
       {
-         this.show();
          var self = this;
+
+         this._hearthling = hearthling;
 
          radiant.call('homf:start_customization')
             .done(function(response)
@@ -200,18 +187,8 @@ App.CustomizeHearthlingView = App.View.extend({
       }
       else
       {
-         this.hide();
+         this.destroy();
       }
-   },
-
-   hide: function()
-   {
-      document.getElementById('customizeHearthling').style.display = 'none';
-   },
-
-   show: function()
-   {
-      document.getElementById('customizeHearthling').style.display = 'block';
    },
 
    _randomizeHearthling: function(newGender)
