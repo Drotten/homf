@@ -71,7 +71,7 @@ $(top).on('stonehearthReady', function(cc)
       App.stonehearthClient._homfCustomizeHearthling = null;
       App.stonehearthClient.showHomfCustomizer = function(hearthling)
       {
-         // toggle the town menu
+         // Toggle the hearthling customizer.
          if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
             this._homfCustomizeHearthling = App.gameView.addView(App.CustomizeHearthlingView);
             this._homfCustomizeHearthling.startCustomization(hearthling);
