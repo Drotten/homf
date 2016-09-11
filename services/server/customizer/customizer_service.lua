@@ -2,7 +2,7 @@ local CustomizerService = class()
 
 function CustomizerService:initialize()
    self._sv = self.__saved_variables:get_data()
-   self._log = radiant.log.create_logger('homf.service')
+   self._log = radiant.log.create_logger('service')
    self._awaiting_customization = {}
 
    if not self._sv.customized_hearthlings then
