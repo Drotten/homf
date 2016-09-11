@@ -113,7 +113,10 @@ function CustomizerService:finish_customization()
    assert(self._sv.customizing_hearthling, 'HoMF: Failed to finish customization')
 
    -- Post customization
-   table.insert(self._sv.customized_hearthlings, self._sv.customizing_hearthling:get_id())
+   local hearthling_id = self._sv.customizing_hearthling:get_id()
+   if not homf.util.contains(self._sv.customized_hearthlings, hearthling_id) then
+      table.insert(self._sv.customized_hearthlings, hearthling_id)
+   end
    self._sv.customizing_hearthling = nil
    self.__saved_variables:mark_changed()
 
