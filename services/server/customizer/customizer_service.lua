@@ -7,6 +7,7 @@ function CustomizerService:initialize()
 
    if not self._sv.customized_hearthlings then
       self._sv.customized_hearthlings = {}
+      self._sv.customizing_hearthling = nil
    end
 
    radiant.events.listen_once(self, 'homf:tracker_online', self, self._on_tracker_online)
@@ -23,7 +24,7 @@ function CustomizerService:_on_tracker_online(player_id)
       self:_setup_customizer()
    end
 
-   self._log:debug('homf service up and running!')
+   self._log:info('homf service up and running!')
    self.__saved_variables:mark_changed()
 end
 
@@ -32,11 +33,12 @@ function CustomizerService:_setup_customizer()
    -- and start customizing them if the setting is set to true.
    local customize = radiant.util.get_config('customize_embarking', true)
    local citizens = self._pop:get_citizens()
+   local customized_hearthlings = self._sv.customized_hearthlings
    for _, citizen in citizens:each() do
       if customize then
-         self:force_customization(citizen)
+         self:try_customization(citizen)
       else
-         table.insert(self._sv.customized_hearthlings, citizen:get_id())
+         table.insert(customized_hearthlings, citizen:get_id())
       end
    end
 
@@ -46,25 +48,23 @@ end
 
 function CustomizerService:_on_citizen_added(args)
    local citizen = args.citizen
-   local citizen_id = citizen:get_id()
    if radiant.util.get_config('customize_immigrating', true) then
       self:force_customization(citizen)
    else
-      table.insert(self._sv.customized_hearthlings, citizen_id)
+      table.insert(self._sv.customized_hearthlings, citizen:get_id())
       self.__saved_variables:mark_changed()
    end
 end
 
 function CustomizerService:_on_citizen_removed(args)
-   local citizen_id = args.entity_id
-
-   table.remove(self._sv.customized_hearthlings, citizen_id)
+   table.remove(self._sv.customized_hearthlings, args.entity_id)
    self.__saved_variables:mark_changed()
 end
 
 function CustomizerService:try_customization(hearthling)
+   local hearthling_id = hearthling:get_id()
    for _, customized_hearthling in pairs(self._sv.customized_hearthlings) do
-      if hearthling == customized_hearthling then
+      if hearthling_id == customized_hearthling then
          return false
       end
    end
@@ -113,7 +113,7 @@ function CustomizerService:finish_customization()
    assert(self._sv.customizing_hearthling, 'HoMF: Failed to finish customization')
 
    -- Post customization
-   table.insert(self._sv.customized_hearthlings, self._sv.customizing_hearthling)
+   table.insert(self._sv.customized_hearthlings, self._sv.customizing_hearthling:get_id())
    self._sv.customizing_hearthling = nil
    self.__saved_variables:mark_changed()
 
