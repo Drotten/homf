@@ -35,54 +35,22 @@ $(top).on('stonehearthReady', function(cc)
       });
    });
 
-   var HomfCustomizer;
+   // The view will be added after the town name has been decided.
+   App.gameView.views.complete.push('CustomizeHearthlingBGView');
 
-   (function() {
-      HomfCustomizer = SimpleClass.extend({
+   App.stonehearthClient._homfCustomizeHearthling = null;
+   App.stonehearthClient.showHomfCustomizer = function(hearthling)
+   {
+      // Toggle the hearthling customizer.
+      if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
+         this._homfCustomizeHearthling = App.gameView.addView(App.CustomizeHearthlingView);
+         this._homfCustomizeHearthling.startCustomization(hearthling);
+      } else {
+         this._homfCustomizeHearthling.destroy();
+         this._homfCustomizeHearthling = null;
+      }
+   };
 
-         init: function()
-         {
-            var self = this;
-
-            radiant.call('homf:get_tracker')
-               .done(function(response)
-                  {
-                     self.trace = radiant.trace(response.tracker)
-                        .progress(function(data)
-                           {
-                              self.startCustomization(data.hearthling);
-                           }
-                        )
-                        .fail(function(e)
-                           {
-                              console.log(e);
-                           }
-                        );
-                  }
-               );
-         },
-
-         startCustomization: function(hearthling)
-         {
-            App.stonehearthClient.showHomfCustomizer(hearthling);
-         }
-      });
-
-      App.stonehearthClient._homfCustomizeHearthling = null;
-      App.stonehearthClient.showHomfCustomizer = function(hearthling)
-      {
-         // Toggle the hearthling customizer.
-         if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
-            this._homfCustomizeHearthling = App.gameView.addView(App.CustomizeHearthlingView);
-            this._homfCustomizeHearthling.startCustomization(hearthling);
-         } else {
-            this._homfCustomizeHearthling.destroy();
-            this._homfCustomizeHearthling = null;
-         }
-      };
-
-      App.homfCustomizer = new HomfCustomizer();
-   })();
 
    // Adds a console command that begins customization on a selected hearthling.
 
@@ -104,4 +72,35 @@ $(top).on('stonehearthReady', function(cc)
       },
       description : "Customizes a hearthling. Arg 0 is id of the hearthling. If no argument is provided, customizes the currently selected hearthling. If the entity is not your own hearthling, then nothing happens. Usage: homf_custom 12345"
    });
+});
+
+App.CustomizeHearthlingBGView = App.View.extend({
+
+   init: function()
+   {
+      var self = this;
+      radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
+
+      radiant.call('homf:get_tracker')
+         .done(function(response)
+            {
+               self.trace = radiant.trace(response.tracker)
+                  .progress(function(data)
+                     {
+                        self._startCustomization(data.hearthling);
+                     }
+                  )
+                  .fail(function(e)
+                     {
+                        console.log(e);
+                     }
+                  );
+            }
+         );
+   },
+
+   _startCustomization: function(hearthling)
+   {
+      App.stonehearthClient.showHomfCustomizer(hearthling);
+   }
 });
