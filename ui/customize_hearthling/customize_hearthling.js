@@ -139,7 +139,8 @@ App.CustomizeHearthlingView = App.View.extend({
          radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:trigger_click'} );
 
          radiant.call('homf:finish_customization');
-         radiant.call('stonehearth:dm_resume_game');
+         if (this._pause_during_customization)
+            radiant.call('stonehearth:dm_resume_game');
       }
 
       this._hearthling = null;
