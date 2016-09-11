@@ -2,6 +2,7 @@
 
 - **Update** - Updated for SH Alpha 18.
 - **Feature** - Hitting the esc key will close the window as if hitting the 'ok' button.
+- **Feature** - Added the console command 'homf_custom' which initiates customization on a selected hearthling.
 - **Bug fix** - No longer customizes same hearthlings again when loading a save.
 
 
