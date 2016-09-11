@@ -19,6 +19,11 @@
          "controller" : "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"   : "server"
       },
+      "force_start_customization":
+      {
+         "controller" : "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"   : "server"
+      },
       "randomize_hearthling":
       {
          "controller" : "file(call_handlers/customizer_call_handler.lua)",

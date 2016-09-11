@@ -21,6 +21,18 @@ function CustomizerCallHandler:start_customization(session, response)
    return customizer:start_customization()
 end
 
+function CustomizerCallHandler:force_start_customization(session, response, hearthling)
+   -- Check to see if `hearthling` is a hearthling and that he belongs to the player.
+   if radiant.entities.is_entity(hearthling) and radiant.entities.is_owned_by_player(hearthling, session.player_id) then
+      local pop = stonehearth.population:get_population(session.player_id)
+      if pop:is_citizen(hearthling) then
+         return customizer:force_customization(hearthling)
+      end
+   end
+
+   return nil
+end
+
 function CustomizerCallHandler:randomize_hearthling(session, response, new_gender, locks)
    return customizer:randomize_hearthling(new_gender, locks)
 end

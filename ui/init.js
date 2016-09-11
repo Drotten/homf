@@ -83,4 +83,25 @@ $(top).on('stonehearthReady', function(cc)
 
       App.homfCustomizer = new HomfCustomizer();
    })();
+
+   // Adds a console command that begins customization on a selected hearthling.
+
+   var selected;
+
+   $(top).on("radiant_selection_changed.unit_frame", function (_, data) {
+      selected = data.selected_entity;
+   });
+
+   radiant.console.register('homf_custom', {
+      call: function(cmdobjs, fn, args) {
+         var entity;
+         if (args.length > 0) {
+            entity = 'object://game/' + args[0];
+         } else {
+            entity = selected;
+         }
+         return radiant.call('homf:force_start_customization', entity);
+      },
+      description : "Customizes a hearthling. Arg 0 is id of the hearthling. If no argument is provided, customizes the currently selected hearthling. If the entity is not your own hearthling, then nothing happens. Usage: homf_custom 12345"
+   });
 });
