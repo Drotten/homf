@@ -1,117 +1,117 @@
-#customizeHearthling
-{
+#customizeHearthling {
    margin: auto;
 
-   .stdBG
-   {
+   .stdBG {
       background-position: center;
-      background-repeat:   no-repeat;
+      background-repeat: no-repeat;
    }
 
-   .window
-   {
+   .window {
       position: absolute;
       left: 50%;
       top: 25%;
       width: 500px;
 
-      input
-      {
+      input {
          position: relative;
       }
 
-      td
-      {
+      td {
          padding: 10px;
       }
 
-      .desc
-      {
+      .desc {
          position: relative;
          width: 100px;
       }
 
-      #hearthlingName
-      {
+      #hearthlingName {
          top: 10px;
          width: 90%;
       }
 
-      #randomButton
-      {
+      #randomButton {
          position: absolute;
          left: 10px;
-         width: 80px;
+         background-image: url(images/randomize.png);
+         width: 67px;
          height: 80px;
-         background: url('./images/random.png');
-         background-size: 75px 75px;
+         background-size: contain;
          .stdBG;
       }
 
-      .genderButton
-      {
+      .genderButton {
          position: relative;
+         top: 5px;
          left: 150px;
-         width: 70px;
-         height: 70px;
-         padding: 5px 5px 5px 5px;
+         width: 61px;
+         height: 66px;
+      }
+      #maleButton {
+         background-image: url(../../../stonehearth/ui/shell/select_roster/images/male_selectable.png);
+         background-size: contain;
+         .stdBG;
+
+         &.selected {
+            .arrowCursor;
+            background-image: url(../../../stonehearth/ui/shell/select_roster/images/male_selected.png);
+         }
+      }
+      #femaleButton {
+         background-image: url(../../../stonehearth/ui/shell/select_roster/images/female_selectable.png);
+         background-size: contain;
+         .stdBG;
+
+         &.selected {
+            .arrowCursor;
+            background-image: url(../../../stonehearth/ui/shell/select_roster/images/female_selected.png);
+         }
       }
 
-      .progressButton
-      {
-         width: 12px;
-         height: 23px;
+      .progressButton {
+         width: 16px;
+         height: 32px;
       }
-      #previousButton
-      {
-         .progressButton;
-         background: url('./images/left_arrow.png');
+      #previousButton {
+         background-image: url(../../../stonehearth/ui/shell/select_roster/images/decrement_button.png);
          .stdBG;
       }
-      #nextButton
-      {
-         .progressButton;
-         background: url('./images/right_arrow.png');
+      #nextButton {
+         background-image: url(../../../stonehearth/ui/shell/select_roster/images/increment_button.png);
          .stdBG;
       }
 
-      .index
-      {
+      .index {
          text-align: center;
          width: 230px;
       }
 
-      #nameLock
-      {
+      #nameLock {
          position: absolute;
          right: 10px;
          top: 79px;
       }
-      #genderLock
-      {
+      #genderLock {
          position: absolute;
          right: 10px;
          top: 140px;
       }
 
-      .stdLock
-      {
+      .stdLock {
          position: absolute;
          right: 0px;
          width: 20px;
          height: 20px;
       }
-      .unlocked
-      {
+      .unlocked {
          .stdLock;
-         background: url('./images/unlocked.png');
+         background-image: url(images/unlocked.png);
          background-size: 15px 15px;
          .stdBG;
       }
-      .locked
-      {
+      .locked {
          .stdLock;
-         background: url('./images/locked.png');
+         background-image: url(images/locked.png);
          background-size: 15px 15px;
          .stdBG;
       }

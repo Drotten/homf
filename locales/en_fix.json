@@ -1,0 +1,13 @@
+{
+   "ui": {
+      "shell": {
+         "select_roster": {
+            "role": "Role",
+            "head": "Head",
+            "body": "Body",
+            "eyebrows": "Eyebrows",
+            "head_hair": "Hair Style"
+         }
+      }
+   }
+}

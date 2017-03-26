@@ -10,8 +10,7 @@ App.CustomizeHearthlingView = App.View.extend({
       4: [ 'headLock' ],
    },
 
-   init: function()
-   {
+   init: function() {
       this._super();
       this._pause_during_customization = true;
       this._zoom_to_hearthling = true;
@@ -33,23 +32,20 @@ App.CustomizeHearthlingView = App.View.extend({
          );
    },
 
-   didInsertElement: function()
-   {
+   didInsertElement: function() {
       this._super();
       var self = this;
 
       this.$('#hearthlingName').keydown(function(e)
          {
             // Backspace - remove the last character in the name.
-            if (e.keyCode == 8)
-            {
+            if (e.keyCode == 8) {
                var newName = self.$('#hearthlingName').val();
                newName = newName.substring(0, newName.length-1);
                radiant.call('homf:set_hearthling_name', newName);
             }
             // Enter - deselect the input text.
-            else if (e.keyCode == 13)
-            {
+            else if (e.keyCode == 13) {
                self.$('#hearthlingName').blur();
             }
          }
@@ -73,20 +69,25 @@ App.CustomizeHearthlingView = App.View.extend({
 
    actions:
    {
-      randomize: function()
-      {
+      randomize: function() {
          radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
          this._randomizeHearthling(null);
       },
 
-      setGender: function(gender)
-      {
+      setGender: function(gender) {
          radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
          this._randomizeHearthling(gender);
+         if (gender == 'male') {
+            self.$('#maleButton').addClass('selected');
+            self.$('#femaleButton').removeClass('selected');
+         }
+         else {
+            self.$('#maleButton').removeClass('selected');
+            self.$('#femaleButton').addClass('selected');
+         }
       },
 
-      nextRole: function(isNext)
-      {
+      nextRole: function(isNext) {
          radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
          var self = this;
@@ -99,42 +100,39 @@ App.CustomizeHearthlingView = App.View.extend({
             );
       },
 
-      nextModel: function(key, isNext)
-      {
+      nextModel: function(key, isNext) {
          radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
          var self = this;
          radiant.call('homf:next_model', key, isNext)
             .done(function(response)
                {
-                  var displayName = self._makeReadable(response.model, {});
+                  //TODO: get another kind of string (number? category name?)
+                  var displayName = self._prettyString(response.model.name, {});
                   document.getElementById(key).innerHTML = displayName;
                }
             );
       },
 
-      nextMaterialMap: function(key, isNext)
-      {
+      nextMaterialMap: function(key, isNext) {
          radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
          var self = this;
          radiant.call('homf:next_material_map', key, isNext)
             .done(function(response)
                {
-                  var displayName = self._makeReadable(response.material_map, { strip: '_material_map|skin_|hair_' });
+                  var displayName = self._prettyString(response.material_map.name, { strip: '_material_map|skin_|hair_' });
                   document.getElementById(key).innerHTML = displayName;
                }
             );
       },
 
-      toggleLock: function(key)
-      {
+      toggleLock: function(key) {
          this._toggleLock(key);
       }
    },
 
-   destroy: function()
-   {
+   destroy: function() {
       if (this._hearthling) {
          radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:trigger_click'} );
 
@@ -147,10 +145,8 @@ App.CustomizeHearthlingView = App.View.extend({
       this._super();
    },
 
-   startCustomization: function(hearthling)
-   {
-      if (hearthling != null)
-      {
+   startCustomization: function(hearthling) {
+      if (hearthling != null) {
          var self = this;
 
          this._hearthling = hearthling;
@@ -158,12 +154,17 @@ App.CustomizeHearthlingView = App.View.extend({
          radiant.call('homf:start_customization')
             .done(function(response)
                {
-                  radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
+                  // radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:reroll'} );
 
                   self.$('#hearthlingName').val(response.name);
 
+                  if (response.gender == 'male')
+                     self.$('#maleButton').addClass('selected');
+                  else
+                     self.$('#femaleButton').addClass('selected');
+
                   self.set('multiple_roles', response.sizes.role > 1);
-                  self.set('role', self._makeReadable(response.role, {}));
+                  self.set('role', self._prettyString(response.role, {}));
                   self.set('roleLockStatus', 'unlocked');
 
                   self._resetLocks();
@@ -192,9 +193,8 @@ App.CustomizeHearthlingView = App.View.extend({
       }
    },
 
-   _randomizeHearthling: function(newGender)
-   {
-      var self  = this;
+   _randomizeHearthling: function(newGender) {
+      var self = this;
       var locks = null;
 
       if (newGender == null)
@@ -211,21 +211,25 @@ App.CustomizeHearthlingView = App.View.extend({
          );
    },
 
-   _processHearthlingData: function(data, locks)
-   {
+   _processHearthlingData: function(data, locks) {
       if (!locks)
          locks = this._getLocks();
 
-      if (data.name)
-      {
+      if (data.name) {
          this.$('#hearthlingName').val(data.name);
          radiant.call('homf:set_hearthling_name', data.name);
       }
 
-      if (data.role)
-      {
+      self.$('#femaleButton').removeClass('selected');
+      self.$('#maleButton').removeClass('selected');
+      if (data.gender == 'male')
+         self.$('#maleButton').addClass('selected');
+      else
+         self.$('#femaleButton').addClass('selected');
+
+      if (data.role) {
          this.set('multiple_roles', data.sizes.role > 1);
-         this.set('role', this._makeReadable(data.role, {}));
+         this.set('role', this._prettyString(data.role, {}));
          var lockStatus = 'unlocked';
          if (locks  &&  locks.role)
             lockStatus = locks.role;
@@ -244,10 +248,9 @@ App.CustomizeHearthlingView = App.View.extend({
       this._setupLocks([ models, material_maps ]);
    },
 
-   _updateTooltips: function()
-   {
+   _updateTooltips: function() {
       var self = this;
-      var ttPath = "homf:ui.data.tooltips.";
+      var ttPath = "stonehearth:homf.ui.data.tooltips.";
 
       var buttons = ["maleButton", "femaleButton", "randomButton", "nextButton", "previousButton"];
       radiant.each(buttons, function(i, button)
@@ -259,8 +262,7 @@ App.CustomizeHearthlingView = App.View.extend({
 
       var size = this._getObjectSize(this.lockDependencies);
       var description = i18n.t(ttPath + "lock.description");
-      for (var i = 1; i <= size; i+=1)
-      {
+      for (var i = 1; i <= size; i+=1) {
          radiant.each(this.lockDependencies[i], function(_, lock)
             {
                self.$('#' + lock).tooltipster({content: description});
@@ -269,16 +271,14 @@ App.CustomizeHearthlingView = App.View.extend({
       }
    },
 
-   _resetLocks: function(startInd)
-   {
+   _resetLocks: function(startInd) {
       if (startInd == null)
          startInd = 1;
 
       var self = this;
 
       var size = this._getObjectSize(this.lockDependencies);
-      for (var i = startInd; i <= size; i+=1)
-      {
+      for (var i = startInd; i <= size; i+=1) {
          radiant.each(this.lockDependencies[i], function(_, lock)
             {
                self.$('#' + lock).attr('class', 'unlocked');
@@ -289,8 +289,7 @@ App.CustomizeHearthlingView = App.View.extend({
       this.$('#nameLock').attr('class', 'unlocked');
    },
 
-   _setupLocks: function(componentsArr)
-   {
+   _setupLocks: function(componentsArr) {
       // Setup the locks so that when something is locked, it will also make sure to lock everything that
       // it is dependent on (e.g. when locking a model, it will also have to lock the gender).
       var self = this;
@@ -327,8 +326,7 @@ App.CustomizeHearthlingView = App.View.extend({
       this.lockDependencies[5] = variousDependencies;
    },
 
-   _getLocks: function()
-   {
+   _getLocks: function() {
       var locks = {};
 
       locks.name   = this.$('#nameLock').attr('class');
@@ -365,8 +363,7 @@ App.CustomizeHearthlingView = App.View.extend({
       return locks;
    },
 
-   _toggleLock: function(lock)
-   {
+   _toggleLock: function(lock) {
       var toStatus = 'unlocked';
       if (this.$('#' + lock).attr('class') == 'unlocked')
          toStatus = 'locked';
@@ -374,8 +371,7 @@ App.CustomizeHearthlingView = App.View.extend({
       this._changeLockStatus(lock, toStatus);
    },
 
-   _changeLockStatus: function(lock, newStatus)
-   {
+   _changeLockStatus: function(lock, newStatus) {
       radiant.call('radiant:play_sound', {'track' : 'stonehearth:sounds:ui:start_menu:submenu_select'} );
 
       var self = this;
@@ -385,8 +381,7 @@ App.CustomizeHearthlingView = App.View.extend({
          {
             radiant.each(lockDepArr, function(_, lockDep)
                {
-                  if (lockDep == lock)
-                  {
+                  if (lockDep == lock) {
                      lockOrder = parseInt(order);
                      return;
                   }
@@ -398,11 +393,9 @@ App.CustomizeHearthlingView = App.View.extend({
       );
 
       this.$('#' + lock).attr('class', newStatus);
-      if (newStatus == 'unlocked')
-      {
+      if (newStatus == 'unlocked') {
          var size = this._getObjectSize(this.lockDependencies);
-         for (var i = lockOrder + 1; i <= size; i+=1)
-         {
+         for (var i = lockOrder + 1; i <= size; i+=1) {
             radiant.each(this.lockDependencies[i], function(_, lockDep)
                {
                   self.$('#' + lockDep).attr('class', newStatus);
@@ -410,10 +403,8 @@ App.CustomizeHearthlingView = App.View.extend({
             );
          }
       }
-      else // (newStatus == 'locked')
-      {
-         for (var i = lockOrder - 1; i > 0; --i)
-         {
+      else { // (newStatus == 'locked')
+         for (var i = lockOrder - 1; i > 0; --i) {
             radiant.each(this.lockDependencies[i], function(_, lockDep)
                {
                   self.$('#' + lockDep).attr('class', newStatus);
@@ -423,19 +414,16 @@ App.CustomizeHearthlingView = App.View.extend({
       }
    },
 
-   _getObjectSize: function(obj)
-   {
+   _getObjectSize: function(obj) {
       var size = 0;
-      for (key in obj)
-      {
+      for (key in obj) {
          if (obj.hasOwnProperty(key))
             ++size;
       }
       return size;
    },
 
-   _modifyMap: function(map, sizes, options)
-   {
+   _modifyMap: function(map, sizes, options) {
       var self = this;
       var locks = this._getLocks();
       var new_map = {};
@@ -459,8 +447,8 @@ App.CustomizeHearthlingView = App.View.extend({
                lockStatus = locks[id];
 
             new_map[id] = {
-               displayKey: self._makeReadable(id, displayKeyOptions),
-               displayName: self._makeReadable(val, displayNameOptions),
+               displayKey: i18n.t('stonehearth:ui.shell.select_roster.' + id),
+               displayName: self._prettyString(val.name, displayNameOptions),
                key: id,
                lockKey: id + 'Lock',
                lockStatus: lockStatus,
@@ -472,20 +460,11 @@ App.CustomizeHearthlingView = App.View.extend({
       return new_map;
    },
 
-   _makeReadable: function(str, options)
-   {
+   _prettyString: function(str, options) {
       if (str == null  ||  typeof str !== 'string')
          return str;
 
-      var from = str.lastIndexOf('/');
-      var to   = str.lastIndexOf('.');
-
-      if (from !== -1  &&  to !== -1)
-         // Get a substring of the file's name without its extension.
-         str = str.substring(from+1, to);
-
-      if (options.strip)
-      {
+      if (options.strip) {
          var stripArr = options.strip.split('|');
          $.each(stripArr, function(_, strip)
             {
@@ -494,10 +473,13 @@ App.CustomizeHearthlingView = App.View.extend({
          );
       }
 
-      // Replace underscores with a space.
+      // Replace underscores with a space
       str = str.replace(/_/g, ' ');
 
-      // Turn the first character of each word into upper case.
+      // Remove all brackets
+      str = str.replace(/\[/g, '').replace(/\]/g, '');
+
+      // Turn the first character of each word into upper case
       str = str.replace(/\w\S*/g, function(txt)
          {
             return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();

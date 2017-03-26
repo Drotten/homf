@@ -2,22 +2,37 @@ local rng = _radiant.math.get_default_rng()
 
 local CustomizeHearthling = class()
 
+-- Copied from Stonehearth's customization_service.lua
+local CUSTOMIZATION = {
+   NONE = '[none]',
+   MATERIAL_MAP = 'material_map',
+   MODEL = 'model',
+   ROOT = 'root',
+   PACKAGES = 'packages',
+   DEFAULT_VARIANT = 'default',
+}
+
+local GENDER = {
+   MALE = 'male',
+   FEMALE = 'female',
+}
+
 function CustomizeHearthling:activate()
    self._log = radiant.log.create_logger('customizer')
 end
 
 function CustomizeHearthling:start_customization(customizing_hearthling, continue)
-   -- Load all data concerning the hearthling's models if we haven't already.
+   -- Load all data concerning the hearthling's models if we haven't already
    if not self._data then
-      self._roles         = {}
-      self._material_maps = {}
-      self._models        = {}
+      self._roles = {}
+      self._mats = {}
+      self._models = {}
 
       local pop = stonehearth.population:get_population(customizing_hearthling)
       self._data = self:_load_faction_data(pop:get_kingdom())
-      self:_setup_data()
-      self:_complement_gender_data(self._material_maps)
+      self:_setup_customization_options_data(self._data)
       self:_complement_gender_data(self._models)
+      self:_complement_gender_data(self._mats)
    end
 
    self._customizing_hearthling = customizing_hearthling
@@ -31,31 +46,28 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
    local role_key
    local gender
 
-   -- Get the current gender and role.
+   -- Get current gender
    gender = customizing_hearthling:get_component('render_info'):get_model_variant()
-   if gender ~= 'female' then
-      gender = 'male'
+   if gender ~= GENDER.FEMALE then
+      gender = GENDER.MALE
    end
    self._gender = gender
 
-   --TODO: really get current role, don't randomize it you fool! (luckily there's only one role for the ascendacy)
+   -- Get current role
+   --TODO: really get current role, don't randomize it!
    --      tmp: solve by only getting the default role, wonder if the entity knows its own role...
    self._role_ind = rng:get_int(1, #self._roles)
    role_key = self._roles[self._role_ind]
 
-   -- Used to store the indexes for the models and material maps used.
+   -- Used to store the indexes for the models and material maps used
    self._indexes = {}
-   self._original_model_order = {}
 
-   -- Find out which models are in use by iteration through the hearthling's models array
-   -- and find its corresponding value within the self._models table.
-   self:_detect_hearthling_starting_data()
-
-   --self:_trace_models()
+   -- Find out which models and material maps are in use
+   self:_find_hearthling_models_and_mats()
 
    hearthling_values.material_maps = {}
-   for material_key, material_table in pairs(self._material_maps[role_key][gender]) do
-      hearthling_values.material_maps[material_key] = material_table[ self._indexes[material_key] ]
+   for mat_key, mat_table in pairs(self._mats[role_key][gender]) do
+      hearthling_values.material_maps[mat_key] = mat_table[ self._indexes[mat_key] ]
    end
 
    hearthling_values.models = {}
@@ -72,181 +84,146 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
 end
 
 function CustomizeHearthling:_load_faction_data(faction_uri)
-   local data = radiant.resources.load_json(faction_uri)
+   local data = radiant.resources.load_json(faction_uri, false)
 
    -- Remove all duplicate values among the entities' uris.
-   for role_key, role in pairs(data.roles) do
-      if role.male then
-         role.male.uri = homf.util.only_unique_values(role.male.uri, false)
+   for _, role_data in pairs(data.roles) do
+      if role_data.male then
+         role_data.male.uri = homf.util.only_unique_values(role_data.male.uri, false)
       end
 
-      if role.female then
-         role.female.uri = homf.util.only_unique_values(role.female.uri, false)
+      if role_data.female then
+         role_data.female.uri = homf.util.only_unique_values(role_data.female.uri, false)
       end
    end
 
    return data
 end
 
-function CustomizeHearthling:_setup_data()
-   local genders = { 'male', 'female' }
+-- Get data from customization index (male and female) such as customization categories (head_hair, skin_color)
+-- and styles data (material map and model file paths for each subcategory).
+function CustomizeHearthling:_setup_customization_options_data(data)
+   local genders = { GENDER.MALE, GENDER.FEMALE }
+   local variant_options_processed = {}
 
-   for _, gender in pairs(genders) do
-      for role_key, role_data in pairs(self._data.roles) do
+   for role, role_data in pairs(data.roles) do
+      for _, gender in pairs(genders) do
          if not role_data[gender] then
             break
          end
 
-         local material_map_keys = { 'skin', 'hair' }
-         local material_maps = {
-            skin_color = {},
-            hair_color = {},
-         }
-         local models = {
-            body = {},
-            head = {},
-            hair = { 'bald' },
-         }
-
          for _, entities_uri in pairs(role_data[gender].uri) do
             local hearthling_json = radiant.resources.load_json(entities_uri)
-            local entity_material_maps = hearthling_json.components.render_info.material_maps
-            local entity_default_models = hearthling_json.components.model_variants.default.models
-            local entity_custom_variants = hearthling_json.entity_data['stonehearth:customization_variants'] or {}
+            local all_variants = hearthling_json.entity_data['stonehearth:customization_variants']
+            if not all_variants then
+               self._log:info('\'%s\' has no customization variants',
+                  tostring(entities_uri))
+               break
+            end
 
-            -- Get all material maps.
-            for _, material_map_data in pairs(entity_material_maps) do
-               if type(material_map_data) == 'string' then
-                  material_map_data = { items = {material_map_data} }
-               end
+            -- Ensure that customization variants are only processed once
+            if homf.util.contains(variant_options_processed, all_variants.customization_options) then
+               break
+            end
+            table.insert(variant_options_processed, all_variants.customization_options)
 
-               for _, material_map in pairs(material_map_data.items) do
-                  local added = false
-                  -- Add the material maps in their appropiate table (i.e. skin, and hair).
-                  for _, material_map_key in pairs(material_map_keys) do
+            local options = radiant.resources.load_json(all_variants.customization_options, false, false)
+            if not options then
+               self._log:info('No Json file is linked to \'%s\'',
+                  tostring(all_variants.customization_options))
+               break
+            end
 
-                     local file_name_start = material_map:find('/[^/]*$') or 1
-                     if material_map:find(material_map_key, file_name_start) then
+            local mats = {}
+            local models = {}
 
-                        material_map_key = material_map_key .. '_color'
-                        if not homf.util.contains(material_maps[material_map_key], material_map) then
-                           self._log:detail('adding "%s" among the "%s" material maps for %ss', material_map, material_map_key, gender)
-                           table.insert(material_maps[material_map_key], material_map)
-                        else
-                           self._log:spam('"%s" has already been added among the "%s" material maps for %ss', material_map, material_map_key, gender)
-                        end
-
-                        added = true
-                        break
+            -- Get all the material maps and models used by
+            -- our hearthling's faction
+            for category, cat_data in pairs(options.styles) do
+               for key, value in pairs(cat_data.values) do
+                  if cat_data.type == CUSTOMIZATION.MATERIAL_MAP then
+                     if not mats[category] then
+                        mats[category] = {}
+                     end
+                     if not homf.util.contains(mats[category], key) then
+                        table.insert(mats[category], {name = key, mat = value})
+                     end
+                  elseif cat_data.type == CUSTOMIZATION.MODEL then
+                     if not models[category] then
+                        models[category] = {}
+                     end
+                     if not homf.util.contains(models[category], key) then
+                        table.insert(models[category], {name = key, model = value})
                      end
                   end
-
-                  if not added then
-                     self._log:warning('unable to find a suitable table for "%s" (by using %s)', material_map, material_map:match('/[^/]*$'))
-                  end
                end
             end
 
-            -- Get the models from the model_variants component.
-            for _, model_data in pairs(entity_default_models) do
-               if type(model_data) == 'string' then
-                  model_data = { items = {model_data} }
+            -- Get the models from the 'model_variants' component
+            local entity_default_models = hearthling_json.components.model_variants.default.models
+            for _, model in pairs(entity_default_models) do
+               local model_name = self:_get_name_from_model(model)
+               if not models[model_name] then
+                  models[model_name] = {}
                end
 
-               for _, model in pairs(model_data.items) do
-
-                  local model_name = self:_get_key_using_model_name(model)
-                  if not models[model_name] then
-                     models[model_name] = {}
-                  end
-
-                  if not homf.util.contains(models[model_name], model) then
-                     self._log:detail('adding "%s" among the "%s" models for %ss', model, model_name, gender)
-                     table.insert(models[model_name], model)
-                  else
-                     self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_name, gender)
-                  end
+               if not homf.util.contains(models[model_name], model_name) then
+                  self._log:detail('adding "%s" among the "%s" models for %ss', model, model_name, gender)
+                  table.insert(models[model_name], {name = model_name, model = model})
+               else
+                  self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_name, gender)
                end
             end
 
-            -- Get the models from entity data.
-            for variants_name, variants_data in pairs(entity_custom_variants) do
-               -- alt 1. store all the models from `variants_data.models` to `variants_name` as their key.
-               --        (ignore the keys that lack models)
-               --        (make an exception for the hair models so as they aren't stored among different keys,
-               --         resulting in two hair models loaded on a hearthling)
-               for _, model in pairs(variants_data.models or {}) do
-                  local model_key = variants_name
-                  -- To avoid the hearthling from having two hair models simultaneously:
-                  -- set the key to 'hair' if it's either 'old' or 'young'.
-                  if model_key == 'old' or model_key == 'young' then
-                     model_key = 'hair'
-                  end
-
-                  if not models[model_key] then
-                     models[model_key] = { 'nothing' }
-                  end
-
-                  if not homf.util.contains(models[model_key], model) then
-                     self._log:detail('adding "%s" among the "%s" models for %ss', model, model_key, gender)
-                     table.insert(models[model_key], model)
-                  else
-                     self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_key, gender)
-                  end
-               end
-
-               -- alt 2. make a connection from `variants.root.variants` to subsequent
-               --        models and their own variants.
-               --        (ignore the keys that lack models)
+            -- Store the role
+            if not homf.util.contains(self._roles, role) then
+               table.insert(self._roles, role)
             end
-         end
 
-         if not homf.util.contains(self._roles, role_key) then
-            table.insert(self._roles, role_key)
-         end
+            -- Store the models and material maps
+            if not self._mats[role] then
+               self._mats[role] = {}
+            end
+            if not self._models[role] then
+               self._models[role] = {}
+            end
 
-         if not self._material_maps[role_key] then
-            self._material_maps[role_key] = {}
+            self._mats[role][gender] = mats
+            self._models[role][gender] = models
          end
-         if not self._models[role_key] then
-            self._models[role_key] = {}
-         end
-
-         self._material_maps[role_key][gender] = material_maps
-         self._models[role_key][gender] = models
       end
    end
 end
 
 function CustomizeHearthling:_complement_gender_data(data)
    for _, role_models in pairs(data) do
-      for model_key, _ in pairs(role_models.male) do
-         if not role_models.female[model_key] then
-            role_models.female[model_key] = { 'nothing' }
+      for model, _ in pairs(role_models.male) do
+         if not role_models.female[model] then
+            role_models.female[model] = { CUSTOMIZATION.NONE }
          end
       end
-      for model_key, _ in pairs(role_models.female) do
-         if not role_models.male[model_key] then
-            role_models.male[model_key] = { 'nothing' }
+      for model, _ in pairs(role_models.female) do
+         if not role_models.male[model] then
+            role_models.male[model] = { CUSTOMIZATION.NONE }
          end
       end
    end
 end
 
-function CustomizeHearthling:_detect_hearthling_starting_data()
+function CustomizeHearthling:_find_hearthling_models_and_mats()
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
-   -- self._log:debug('finding models and material maps used by %s', tostring(self._customizing_hearthling))
+   self._log:spam('finding models and material maps used by %s', tostring(self._customizing_hearthling))
 
-   -- Get the material maps used.
+   -- Get the material maps used
    self._render_info:trace_material_maps('getting attached material maps')
-      :on_added(function(material)
-         for material_key, material_table in pairs(self._material_maps[role_key][gender]) do
-            for index, material_name in pairs(material_table) do
-               if material_name == material then
-                  -- self._log:debug('found material map "%s" for "%s"', material_name, material_key)
-                  self._indexes[material_key] = index
+      :on_added(function(mat)
+         for mat_key, mat_table in pairs(self._mats[role_key][gender]) do
+            for index, mat_vals in pairs(mat_table) do
+               if mat_vals.mat == mat then
+                  self._log:spam('found material map "%s" for "%s"', mat_vals.name, mat_key)
+                  self._indexes[mat_key] = index
                   return
                end
             end
@@ -255,15 +232,14 @@ function CustomizeHearthling:_detect_hearthling_starting_data()
       :push_object_state()
       :destroy()
 
-   -- Get the models used.
+   -- Get the models used
    self._model_variants:trace_models('getting attached models')
       :on_added(function(model)
          for model_key, model_table in pairs(self._models[role_key][gender]) do
-            for index, model_name in pairs(model_table) do
-               if model_name == model then
-                  -- self._log:debug('found model "%s" for "%s"', model_name, model_key)
+            for index, model_vals in pairs(model_table) do
+               if model_vals.model == model then
+                  self._log:spam('found model "%s" for "%s"', model_vals.name, model_key)
                   self._indexes[model_key] = index
-                  table.insert(self._original_model_order, model_key)
                   return
                end
             end
@@ -272,66 +248,29 @@ function CustomizeHearthling:_detect_hearthling_starting_data()
       :push_object_state()
       :destroy()
 
-   -- In case the model used wasn't found (i.e. if it's set to 'nothing')
-   -- then fill in the blanks to make sure all the keys are registered in the UI.
-   for model_key, _ in pairs(self._models[role_key][gender]) do
-      if not self._indexes[model_key] then
-         -- self._log:debug('found model "nothing" for "%s"', model_key)
-         self._indexes[model_key] = 1
-         table.insert(self._original_model_order, model_key)
+   -- In case the model used wasn't found (i.e. if it's set to CUSTOMIZATION.NONE)
+   -- then fill in the blanks to make sure all the keys are registered
+   for model, _ in pairs(self._models[role_key][gender]) do
+      if not self._indexes[model] then
+         self._log:spam('found model "%s" for "%s"', CUSTOMIZATION.NONE, model)
+         self._indexes[model] = 1
       end
    end
-end
-
-function CustomizeHearthling:_trace_models()
-   local role_key = self._roles[self._role_ind]
-   local gender   = self._gender
-   local pushing_state = false
-   local order_index = 1
-
-   self._model_trace = self._model_variants:trace_models('tracing models')
-      :on_added(function(model)
-         --TODO: find out the order of the models in the array, if the head and body models are located after the other ones, do self:_renew_and_update_models()
---         self._log:debug('trace_models: %s', tostring(model))
--- [[
-         if pushing_state then
-            self._log:debug('trace_models: %s', tostring(model))
-            local model_key = self._original_model_order[order_index]
-            self._log:debug('if not %s or "%s" == "%s" then', tostring(self:_is_valid_model(self._models[role_key][gender][model_key][self._indexes[model_key]])), self:_find_key_from_model(model), model_key)
-            if not self:_is_valid_model(self._models[role_key][gender][model_key][self._indexes[model_key]]) or self:_find_key_from_model(model) == model_key then
-               order_index = order_index + 1
-            else
-               self:_remove_model(model)
-               self:_update_models()
-               self:_add_model(model)
-               self:_update_models()
-            end
-         else
-            pushing_state = true
-            order_index = 1
-            self._model_trace:push_object_state()
-            pushing_state = false
-         end
---]]
-      end)
---      :push_object_state()
---      :destroy()
 end
 
 function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_ind)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
-   local switch_materials_data = {}
+   local switch_mats_data = {}
    local switch_models_data = {}
 
---   self._log:debug(radiant.util.table_tostring(self._indexes))
    -- Get information on the current material maps and models used,
-   -- the information gathered will be later used when switching to new ones.
-   for material_key, material_table in pairs(self._material_maps[role_key][gender]) do
-      if self:_is_open(locks, material_key) then
-         switch_materials_data[material_key] = {
-            old_table = material_table,
-            old_index = self._indexes[material_key],
+   -- the information gathered will be later used when switching to new ones
+   for mat_key, mat_table in pairs(self._mats[role_key][gender]) do
+      if self:_is_open(locks, mat_key) then
+         switch_mats_data[mat_key] = {
+            old_table = mat_table,
+            old_index = self._indexes[mat_key],
          }
       end
    end
@@ -344,7 +283,7 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
       end
    end
 
-   -- Decide the new role.
+   -- Decide the new role
    -- NOTE: if `new_gender` has a value, that means a new gender was chosen by
    -- the player, and since different roles can have different sets of genders, it's not randomized.
    if new_role_ind then
@@ -354,7 +293,7 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
    end
    role_key = self._roles[self._role_ind]
 
-   -- Decide the new gender.
+   -- Decide the new gender
    if new_gender then
       gender = new_gender
    else
@@ -363,28 +302,26 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
    self._gender = gender
 
    -- Define some variables. Get copy of the current models and materials used, which will later
-   -- be replaced by the newly randomized ones (assuming they're not locked).
+   -- be replaced by the newly randomized ones (unless they are locked)
    local name
-   local new_material_maps, new_models, _ = self:get_current_data()
+   local new_mats, new_models, _ = self:get_current_data()
 
-   -- Randomize material maps.
-   for material_key, material_data in pairs(switch_materials_data) do
-      local new_material_table = self._material_maps[role_key][gender][material_key]
-      local new_material_index = rng:get_int(1, #new_material_table)
-      new_material_maps[material_key] = self:_switch_material_maps(material_key, material_data.old_index, new_material_index, material_data.old_table, new_material_table)
+   -- Randomize material maps
+   for mat_key, mat_data in pairs(switch_mats_data) do
+      local new_mat_table = self._mats[role_key][gender][mat_key]
+      local new_mat_index = rng:get_int(1, #new_mat_table)
+      new_mats[mat_key] = self:_switch_material_maps(mat_key, mat_data.old_index, new_mat_index, mat_data.old_table, new_mat_table)
    end
 
-   -- Randomize models.
+   -- Randomize models
    for model_key, model_data in pairs(switch_models_data) do
       local new_model_table = self._models[role_key][gender][model_key]
       local new_model_index = rng:get_int(1, #new_model_table)
       new_models[model_key] = self:_switch_models(model_key, model_data.old_index, new_model_index, model_data.old_table, new_model_table)
    end
    self:_update_models()
---   self:_renew_and_update_models()
---   self:_trace_models()
 
-   -- Randomize the name.
+   -- Randomize name
    if self:_is_open(locks, 'name') then
       name = self:_random_name()
    end
@@ -393,7 +330,7 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
       name = name,
       gender = gender,
       role = role_key,
-      material_maps = new_material_maps,
+      material_maps = new_mats,
       models = new_models,
       sizes = self:_get_table_sizes(),
    }
@@ -409,31 +346,31 @@ function CustomizeHearthling:set_hearthling_name(name)
    end
 end
 
-function CustomizeHearthling:next_role(is_next)
-   local new_role_ind = homf.util.rotate_table_index(self._role_ind, self._roles, is_next)
+function CustomizeHearthling:next_role(increment)
+   local new_role_ind = homf.util.rotate_table_index(self._role_ind, self._roles, increment)
    return self:randomize_hearthling(nil, nil, new_role_ind)
 end
 
-function CustomizeHearthling:next_material_map(material_name, is_next)
+function CustomizeHearthling:next_material_map(mat_name, increment)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
-   local material_map_table = self._material_maps[role_key][gender][material_name]
+   local mat_table = self._mats[role_key][gender][mat_name]
 
-   local old_material_map_index = self._indexes[material_name]
-   local new_material_map_index = homf.util.rotate_table_index(self._indexes[material_name], material_map_table, is_next)
+   local old_mat_index = self._indexes[mat_name]
+   local new_mat_index = homf.util.rotate_table_index(self._indexes[mat_name], mat_table, increment)
 
-   return self:_switch_material_maps(material_name, old_material_map_index, new_material_map_index, material_map_table)
+   return self:_switch_material_maps(mat_name, old_mat_index, new_mat_index, mat_table)
 end
 
-function CustomizeHearthling:next_model(model_name, is_next)
+function CustomizeHearthling:next_model(model_name, increment)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
    local model_table = self._models[role_key][gender][model_name]
 
    local old_model_index = self._indexes[model_name]
-   local new_model_index = homf.util.rotate_table_index(self._indexes[model_name], model_table, is_next)
+   local new_model_index = homf.util.rotate_table_index(self._indexes[model_name], model_table, increment)
 
    local new_model = self:_switch_models(model_name, old_model_index, new_model_index, model_table)
    self:_update_models()
@@ -445,9 +382,9 @@ function CustomizeHearthling:get_current_data()
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
-   local current_material_maps = {}
-   for key, material_maps in pairs(self._material_maps[role_key][gender]) do
-      current_material_maps[key] = material_maps[ self._indexes[key] ]
+   local current_mats = {}
+   for key, mats in pairs(self._mats[role_key][gender]) do
+      current_mats[key] = mats[ self._indexes[key] ]
    end
 
    local current_models = {}
@@ -455,7 +392,7 @@ function CustomizeHearthling:get_current_data()
       current_models[key] = models[ self._indexes[key] ]
    end
 
-   return current_material_maps, current_models, self._roles[role_key]
+   return current_mats, current_models, self._roles[role_key]
 end
 
 function CustomizeHearthling:_get_random_gender(locks)
@@ -463,34 +400,46 @@ function CustomizeHearthling:_get_random_gender(locks)
 
    if self:_is_open(locks, 'gender') then
       if rng:get_int(1,2) == 1 then
-         new_gender = 'female'
+         new_gender = GENDER.FEMALE
       else
-         new_gender = 'male'
+         new_gender = GENDER.MALE
       end
    end
 
    return new_gender
 end
 
-function CustomizeHearthling:_switch_material_maps(material_key, from_material_index, to_material_index, from_material_map_table, to_material_map_table)
-   if not to_material_map_table then
-      to_material_map_table = from_material_map_table
+function CustomizeHearthling:_switch_material_maps(mat_key, from_mat_index, to_mat_index, from_mat_map, to_mat_map)
+   if not to_mat_map then
+      to_mat_map = from_mat_map
    end
 
    -- Don't switch between the same material maps.
-   if from_material_map_table[from_material_index] == to_material_map_table[to_material_index] then
-      return to_material_map_table[to_material_index]
+   if from_mat_map[from_mat_index].mat == to_mat_map[to_mat_index].mat then
+      return to_mat_map[to_mat_index]
    end
 
-   -- self._log:debug('removing material map %s', from_material_map_table[from_material_index])
-   self._render_info:remove_material_map( from_material_map_table[from_material_index] )
+   self:_remove_material_map( from_mat_map[from_mat_index].mat )
 
-   self._indexes[material_key] = to_material_index
-   local new_material_map = to_material_map_table[to_material_index]
-   -- self._log:debug('adding material map %s', new_material_map)
-   self._render_info:add_material_map(new_material_map)
+   self._indexes[mat_key] = to_mat_index
+   local new_mat_map = to_mat_map[to_mat_index]
+   self:_add_material_map(new_mat_map.mat)
 
-   return new_material_map
+   return new_mat_map
+end
+
+function CustomizeHearthling:_add_material_map(material_map)
+   if self:_is_valid_style(material_map) then
+      self._log:detail('adding material map %s', material_map)
+      self._render_info:add_material_map(material_map)
+   end
+end
+
+function CustomizeHearthling:_remove_material_map(material_map)
+   if self:_is_valid_style(material_map) then
+      self._log:detail('removing material map %s', material_map)
+      self._render_info:remove_material_map(material_map)
+   end
 end
 
 function CustomizeHearthling:_switch_models(model_key, from_model_index, to_model_index, from_model_table, to_model_table)
@@ -499,29 +448,29 @@ function CustomizeHearthling:_switch_models(model_key, from_model_index, to_mode
    end
 
    -- Don't switch between the same models.
-   if from_model_table[from_model_index] == to_model_table[to_model_index] then
+   if from_model_table[from_model_index].model == to_model_table[to_model_index].model then
       return to_model_table[to_model_index]
    end
 
-   self:_remove_model( from_model_table[from_model_index] )
+   self:_remove_model( from_model_table[from_model_index].model )
 
    self._indexes[model_key] = to_model_index
    local new_model = to_model_table[to_model_index]
-   self:_add_model(new_model)
+   self:_add_model(new_model.model)
 
    return new_model
 end
 
 function CustomizeHearthling:_add_model(model)
-   if self:_is_valid_model(model) then
-      -- self._log:debug('adding model %s', model)
+   if self:_is_valid_style(model) then
+      self._log:detail('adding model %s', model)
       self._model_variants:add_model(model)
    end
 end
 
 function CustomizeHearthling:_remove_model(model)
-   if self:_is_valid_model(model) then
-      -- self._log:debug('removing model %s', model)
+   if self:_is_valid_style(model) then
+      self._log:detail('removing model %s', model)
       self._model_variants:remove_model(model)
    end
 end
@@ -529,44 +478,10 @@ end
 function CustomizeHearthling:_update_models()
    -- Set the model variant to its default/female variant which will force the engine to display the new model.
    local variant = ''
-   if self._gender == 'female' then
-      variant = 'female'
+   if self._gender == GENDER.FEMALE then
+      variant = GENDER.FEMALE
    end
    self._render_info:set_model_variant(variant)
-end
-
-function CustomizeHearthling:_renew_and_update_models()
-   --TODO: remove all models but the body and head, update the models, add back all the removed models and update again.
-   local role_key = self._roles[self._role_ind]
-   local gender   = self._gender
-
-   local retain_models = { body = true, head = true }
-   local order_of_models = { 'body', 'head' }
-   local removed_models = {}
-
-   for model_key, model_table in pairs(self._models[role_key][gender]) do
-      --if not retain_models[model_key] then
-         local model = model_table[self._indexes[model_key]]
-         removed_models[model_key] = model
-         self:_remove_model(model)
-      --end
-   end
-
-   -- self._log:debug(radiant.util.table_tostring(removed_models))
-
-   self:_update_models()
-
-   for index, model_key in pairs(order_of_models) do
-      self:_add_model(removed_models[model_key])
-      table.remove(removed_models, index)
-   end
---   radiant.set_realtime_timer('CustomizeHearthling _renew_and_update_models', 50, function()
-      for _, model in pairs(removed_models) do
-         self:_add_model(model)
-      end
-
-      self:_update_models()
---   end)
 end
 
 function CustomizeHearthling:_random_name()
@@ -583,11 +498,11 @@ function CustomizeHearthling:_is_open(locks, lock_name)
    return not locks or not locks[lock_name] or locks[lock_name] == 'unlocked'
 end
 
-function CustomizeHearthling:_is_valid_model(model)
-   return model ~= 'nothing' and model ~= 'bald'
+function CustomizeHearthling:_is_valid_style(style)
+   return style ~= nil and style ~= CUSTOMIZATION.NONE and style ~= ''
 end
 
-function CustomizeHearthling:_get_key_using_model_name(model)
+function CustomizeHearthling:_get_name_from_model(model)
    -- We use the first word found in the model's name and get its corresponding key.
    -- NOTE: The model key needs to have the key that was used when storing the key.
    --       E.g. chops and various facial hair has the key 'facial_hair' rather than using its name as a basis.
@@ -620,8 +535,8 @@ function CustomizeHearthling:_get_table_sizes()
       sizes[model_key] = radiant.size(model_table)
    end
 
-   for material_key, material_table in pairs(self._material_maps[role_key][gender]) do
-      sizes[material_key] = radiant.size(material_table)
+   for mat_key, mat_table in pairs(self._mats[role_key][gender]) do
+      sizes[mat_key] = radiant.size(mat_table)
    end
 
    sizes.role = radiant.size(self._roles)

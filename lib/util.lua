@@ -58,7 +58,7 @@ end
 -- If that index points outside of its correspinding table,
 -- then have it point at the other end of the table.
 --
-function util.rotate_table_index(index, table_len, is_next)
+function util.rotate_table_index(index, table_len, increment)
    if type(table_len) == 'table' then
       table_len = #table_len
    end
@@ -66,12 +66,11 @@ function util.rotate_table_index(index, table_len, is_next)
    assert(type(index)     == 'number', 'wrong type given to argument #1, expected a number but got %s', type(index))
    assert(type(table_len) == 'number', 'wrong type given to argument #2, expected either a table or number but got %s', type(table_len))
 
-   -- In case is_next == nil or some value type other than a boolean
-   if is_next ~= false then
-      is_next = true
+   if increment ~= false then
+      increment = true
    end
 
-   if is_next then
+   if increment then
       index = index + 1
       if index > table_len then
          index = 1
