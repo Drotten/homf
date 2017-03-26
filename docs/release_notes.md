@@ -1,6 +1,12 @@
+### Version 1.1.4
+
+- **Compatibility** - Updated for SH Alpha 21.
+- **UI** - Uses the images provided by SH instead.
+
+
 ### Version 1.1.3
 
-- **Update** - Updated for SH Alpha 18.
+- **Compatibility** - Updated for SH Alpha 18.
 - **Feature** - Hitting the esc key will close the window as if hitting the 'ok' button.
 - **Feature** - Added the console command 'homf_custom' which initiates customization on a selected hearthling.
 - **Bug fix** - No longer customizes same hearthlings again when loading a save.
