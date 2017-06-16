@@ -250,7 +250,7 @@ App.CustomizeHearthlingView = App.View.extend({
 
    _updateTooltips: function() {
       var self = this;
-      var ttPath = "stonehearth:homf.ui.data.tooltips.";
+      var ttPath = "homf:ui.data.tooltips.";
 
       var buttons = ["maleButton", "femaleButton", "randomButton", "nextButton", "previousButton"];
       radiant.each(buttons, function(i, button)

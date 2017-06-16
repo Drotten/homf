@@ -1,7 +1,6 @@
 {
    "info": {
-      "name": "Hearthlings of Many Faces",
-      "description": "Change your hearthlings' appearance to your preferences.",
+      "name": "homf",
       "version": 3
    },
 
@@ -9,7 +8,7 @@
    "server_init_script": "file(server_init)",
 
    "mixintos": {
-      "/stonehearth/locales/en.json": ["file(locales/en_fix.json)", "file(locales/en.json)"]
+      "/stonehearth/locales/en.json": "file(locales/en_fix.json)"
    },
 
    "functions": {
