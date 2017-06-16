@@ -446,8 +446,12 @@ App.CustomizeHearthlingView = App.View.extend({
             if (locks[id])
                lockStatus = locks[id];
 
+            displayKey = i18n.t('stonehearth:ui.shell.select_roster.' + id);
+            if (displayKey === 'stonehearth:ui.shell.select_roster.' + id)
+               displayKey = self._prettyString(id, displayKeyOptions);
+
             new_map[id] = {
-               displayKey: i18n.t('stonehearth:ui.shell.select_roster.' + id),
+               displayKey: displayKey,
                displayName: self._prettyString(val.name, displayNameOptions),
                key: id,
                lockKey: id + 'Lock',
