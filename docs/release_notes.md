@@ -1,3 +1,8 @@
+### Version 1.1.4b
+
+- **Compatibility** - Updated for SH Alpha 22.
+
+
 ### Version 1.1.4a
 
 - **UI** - Fixed localization issue for model's key name when its name aren't present in the localization file.
