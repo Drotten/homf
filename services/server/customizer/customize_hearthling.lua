@@ -146,14 +146,14 @@ function CustomizeHearthling:_setup_customization_options_data(data)
                         mats[category] = {}
                      end
                      if not homf.util.contains(mats[category], key) then
-                        table.insert(mats[category], {name = key, mat = value})
+                        table.insert(mats[category], {name = key, mat = value.file})
                      end
                   elseif cat_data.type == CUSTOMIZATION.MODEL then
                      if not models[category] then
                         models[category] = {}
                      end
                      if not homf.util.contains(models[category], key) then
-                        table.insert(models[category], {name = key, model = value})
+                        table.insert(models[category], {name = key, model = value.file})
                      end
                   end
                end
@@ -414,7 +414,7 @@ function CustomizeHearthling:_switch_material_maps(mat_key, from_mat_index, to_m
       to_mat_map = from_mat_map
    end
 
-   -- Don't switch between the same material maps.
+   -- Don't switch between the same material maps
    if from_mat_map[from_mat_index].mat == to_mat_map[to_mat_index].mat then
       return to_mat_map[to_mat_index]
    end
@@ -447,7 +447,7 @@ function CustomizeHearthling:_switch_models(model_key, from_model_index, to_mode
       to_model_table = from_model_table
    end
 
-   -- Don't switch between the same models.
+   -- Don't switch between the same models
    if from_model_table[from_model_index].model == to_model_table[to_model_index].model then
       return to_model_table[to_model_index]
    end
@@ -476,7 +476,8 @@ function CustomizeHearthling:_remove_model(model)
 end
 
 function CustomizeHearthling:_update_models()
-   -- Set the model variant to its default/female variant which will force the engine to display the new model.
+   -- Set the model variant to its default/female variant
+   -- which will force the engine to display the new model
    local variant = ''
    if self._gender == GENDER.FEMALE then
       variant = GENDER.FEMALE
@@ -503,7 +504,7 @@ function CustomizeHearthling:_is_valid_style(style)
 end
 
 function CustomizeHearthling:_get_name_from_model(model)
-   -- We use the first word found in the model's name and get its corresponding key.
+   -- We use the first word found in the model's name and get its corresponding key
    -- NOTE: The model key needs to have the key that was used when storing the key.
    --       E.g. chops and various facial hair has the key 'facial_hair' rather than using its name as a basis.
 
