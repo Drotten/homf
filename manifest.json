@@ -13,6 +13,10 @@
    },
 
    "functions": {
+      "add_customizer": {
+         "controller": "file(call_handlers/customizer_call_handler.lua)",
+         "endpoint"  : "server"
+      },
       "get_tracker": {
          "controller": "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"  : "server"
@@ -69,6 +73,7 @@
    },
 
    "controllers": {
+      "customizer": "file(services/server/customizer/customizer.lua)",
       "customizer:customize_hearthling": "file(services/server/customizer/customize_hearthling.lua)"
    },
 

@@ -1,32 +1,24 @@
 local CustomizerCallHandler = class()
 local customizer = homf.customizer
-local datastore
 
-function CustomizerCallHandler:_update_datastore(args)
-   datastore:set_data({ hearthling = args.hearthling })
+function CustomizerCallHandler:add_customizer(session, response)
+   return { customizer = customizer:add_customizer(session.player_id) }
 end
 
 function CustomizerCallHandler:get_tracker(session, response)
-   if not datastore then
-      datastore = radiant.create_datastore()
-
-      assert(customizer, 'HoMF: the customizer service does not exist')
-      radiant.events.listen(customizer, 'homf:customize', self, self._update_datastore)
-      radiant.events.trigger_async(customizer, 'homf:tracker_online', session.player_id)
-   end
-   return { tracker = datastore }
+   return { tracker = customizer:get_tracker(session.player_id) }
 end
 
 function CustomizerCallHandler:start_customization(session, response)
-   return customizer:start_customization()
+   return customizer:get_customizer(session.player_id):start_customization()
 end
 
-function CustomizerCallHandler:force_start_customization(session, response, hearthling)
-   -- Check to see if `hearthling` is a hearthling and that he belongs to the player.
-   if radiant.entities.is_entity(hearthling) and radiant.entities.is_owned_by_player(hearthling, session.player_id) then
+function CustomizerCallHandler:force_start_customization(session, response, entity)
+   -- Check to see if `entity` is an actual hearthling and that it belongs to the player
+   if radiant.entities.is_entity(entity) and radiant.entities.is_owned_by_player(entity, session.player_id) then
       local pop = stonehearth.population:get_population(session.player_id)
-      if pop:is_citizen(hearthling) then
-         return customizer:force_customization(hearthling)
+      if pop:is_citizen(entity) then
+         return customizer:get_customizer(session.player_id):force_customization(entity)
       end
    end
 
@@ -34,31 +26,31 @@ function CustomizerCallHandler:force_start_customization(session, response, hear
 end
 
 function CustomizerCallHandler:randomize_hearthling(session, response, new_gender, locks)
-   return customizer:randomize_hearthling(new_gender, locks)
+   return customizer:get_customizer(session.player_id):randomize_hearthling(new_gender, locks)
 end
 
 function CustomizerCallHandler:get_hearthling_name(session, response)
-   return { name = customizer:get_hearthling_name() }
+   return { name = customizer:get_customizer(session.player_id):get_hearthling_name() }
 end
 
 function CustomizerCallHandler:set_hearthling_name(session, response, name)
-   customizer:set_hearthling_name(name)
+   customizer:get_customizer(session.player_id):set_hearthling_name(name)
 end
 
 function CustomizerCallHandler:next_role(session, response, is_next)
-   return customizer:next_role(is_next)
+   return customizer:get_customizer(session.player_id):next_role(is_next)
 end
 
 function CustomizerCallHandler:next_material_map(session, response, material_name, is_next)
-   return { material_map = customizer:next_material_map(material_name, is_next) }
+   return { material_map = customizer:get_customizer(session.player_id):next_material_map(material_name, is_next) }
 end
 
 function CustomizerCallHandler:next_model(session, response, model_name, is_next)
-   return { model = customizer:next_model(model_name, is_next) }
+   return { model = customizer:get_customizer(session.player_id):next_model(model_name, is_next) }
 end
 
 function CustomizerCallHandler:finish_customization(session, response)
-   customizer:finish_customization()
+   customizer:get_customizer(session.player_id):finish_customization()
 end
 
 return CustomizerCallHandler

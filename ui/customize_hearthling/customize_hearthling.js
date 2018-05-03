@@ -122,7 +122,7 @@ App.CustomizeHearthlingView = App.View.extend({
          radiant.call('radiant:play_sound', {'track': 'stonehearth:sounds:ui:start_menu:trigger_click'});
 
          radiant.call('homf:finish_customization');
-         if (this._pause_during_customization)
+         if (this._pause_during_customization && !this.get('isMultiplayer'))
             radiant.call('stonehearth:dm_resume_game');
       }
 
@@ -130,8 +130,9 @@ App.CustomizeHearthlingView = App.View.extend({
       this._super();
    },
 
-   startCustomization: function(hearthling) {
+   startCustomization: function(hearthling, isMultiplayer) {
       if (hearthling != null) {
+         this.set('isMultiplayer', isMultiplayer);
          var self = this;
 
          this._hearthling = hearthling;
@@ -166,7 +167,7 @@ App.CustomizeHearthlingView = App.View.extend({
 
                if (self._zoom_to_hearthling)
                   radiant.call('homf:move_to_hearthling', hearthling);
-               if (self._pause_during_customization)
+               if (self._pause_during_customization && !self.get('isMultiplayer'))
                   radiant.call('stonehearth:dm_pause_game');
             });
       }
