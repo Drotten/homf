@@ -36,11 +36,12 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
    end
 
    self._customizing_hearthling = customizing_hearthling
-   self._model_variants = customizing_hearthling:get_component('model_variants'):get_variant('default')
+   self._model_variants = customizing_hearthling
+      :get_component('model_variants'):get_variant('default')
    self._render_info = customizing_hearthling:get_component('render_info')
 
-   assert(self._model_variants, 'HoMF: Model variants component not found')
-   assert(self._render_info, 'HoMF: Render info component not found')
+   assert(self._model_variants, 'HoMF: model_variants component not found')
+   assert(self._render_info, 'HoMF: render_info component not found')
 
    local hearthling_values = {}
    local role_key
@@ -122,12 +123,15 @@ function CustomizeHearthling:_setup_customization_options_data(data)
             end
 
             -- Ensure that customization variants are only processed once
-            if homf.util.contains(variant_options_processed, all_variants.customization_options) then
+            if homf.util.contains(variant_options_processed,
+                                  all_variants.customization_options) then
                break
             end
             table.insert(variant_options_processed, all_variants.customization_options)
 
-            local options = radiant.resources.load_json(all_variants.customization_options, false, false)
+            local options =
+               radiant.resources.load_json(all_variants.customization_options,
+                                           false, false)
             if not options then
                self._log:info('No Json file is linked to \'%s\'',
                   tostring(all_variants.customization_options))
@@ -160,7 +164,8 @@ function CustomizeHearthling:_setup_customization_options_data(data)
             end
 
             -- Get the models from the 'model_variants' component
-            local entity_default_models = hearthling_json.components.model_variants.default.models
+            local entity_default_models =
+               hearthling_json.components.model_variants.default.models
             for _, model in pairs(entity_default_models) do
                local model_name = self:_get_name_from_model(model)
                if not models[model_name] then
@@ -168,10 +173,12 @@ function CustomizeHearthling:_setup_customization_options_data(data)
                end
 
                if not homf.util.contains(models[model_name], model_name) then
-                  self._log:detail('adding "%s" among the "%s" models for %ss', model, model_name, gender)
+                  self._log:detail('adding "%s" among the "%s" models for %ss',
+                     model, model_name, gender)
                   table.insert(models[model_name], {name = model_name, model = model})
                else
-                  self._log:spam('"%s" has already been added among the "%s" models for %ss', model, model_name, gender)
+                  self._log:spam('"%s" has already been added among the "%s" models for %ss',
+                     model, model_name, gender)
                end
             end
 
@@ -214,7 +221,8 @@ function CustomizeHearthling:_find_hearthling_models_and_mats()
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
-   self._log:spam('finding models and material maps used by %s', tostring(self._customizing_hearthling))
+   self._log:spam('finding models and material maps used by %s',
+      tostring(self._customizing_hearthling))
 
    -- Get the material maps used
    self._render_info:trace_material_maps('getting attached material maps')
@@ -222,7 +230,8 @@ function CustomizeHearthling:_find_hearthling_models_and_mats()
          for mat_key, mat_table in pairs(self._mats[role_key][gender]) do
             for index, mat_vals in pairs(mat_table) do
                if mat_vals.mat == mat then
-                  self._log:spam('found material map "%s" for "%s"', mat_vals.name, mat_key)
+                  self._log:spam('found material map "%s" for "%s"',
+                                 mat_vals.name, mat_key)
                   self._indexes[mat_key] = index
                   return
                end
@@ -238,7 +247,8 @@ function CustomizeHearthling:_find_hearthling_models_and_mats()
          for model_key, model_table in pairs(self._models[role_key][gender]) do
             for index, model_vals in pairs(model_table) do
                if model_vals.model == model then
-                  self._log:spam('found model "%s" for "%s"', model_vals.name, model_key)
+                  self._log:spam('found model "%s" for "%s"',
+                                 model_vals.name, model_key)
                   self._indexes[model_key] = index
                   return
                end
@@ -285,7 +295,8 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
 
    -- Decide the new role
    -- NOTE: if `new_gender` has a value, that means a new gender was chosen by
-   -- the player, and since different roles can have different sets of genders, it's not randomized.
+   -- the player, and, since different roles can have different sets of genders,
+   -- it's not randomized
    if new_role_ind then
       self._role_ind = new_role_ind
    elseif not new_gender and self:_is_open(locks, 'role') then
@@ -299,6 +310,10 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
    else
       gender = self:_get_random_gender(locks)
    end
+   if self._gender ~= gender then
+      --TODO: get the correct animation table from the entity's json file
+      self._render_info:set_animation_table('stonehearth:skeletons:humanoid:' .. gender)
+   end
    self._gender = gender
 
    -- Define some variables. Get copy of the current models and materials used, which will later
@@ -310,14 +325,22 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
    for mat_key, mat_data in pairs(switch_mats_data) do
       local new_mat_table = self._mats[role_key][gender][mat_key]
       local new_mat_index = rng:get_int(1, #new_mat_table)
-      new_mats[mat_key] = self:_switch_material_maps(mat_key, mat_data.old_index, new_mat_index, mat_data.old_table, new_mat_table)
+      new_mats[mat_key] = self:_switch_material_maps(mat_key,
+                                                     mat_data.old_index,
+                                                     new_mat_index,
+                                                     mat_data.old_table,
+                                                     new_mat_table)
    end
 
    -- Randomize models
    for model_key, model_data in pairs(switch_models_data) do
       local new_model_table = self._models[role_key][gender][model_key]
       local new_model_index = rng:get_int(1, #new_model_table)
-      new_models[model_key] = self:_switch_models(model_key, model_data.old_index, new_model_index, model_data.old_table, new_model_table)
+      new_models[model_key] = self:_switch_models(model_key,
+                                                  model_data.old_index,
+                                                  new_model_index,
+                                                  model_data.old_table,
+                                                  new_model_table)
    end
    self:_update_models()
 
@@ -325,6 +348,8 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
    if self:_is_open(locks, 'name') then
       name = self:_random_name()
    end
+
+   -- self._log:debug('Animation table: %s', tostring(self._render_info:get_animation_table()))
 
    return {
       name = name,
@@ -347,7 +372,8 @@ function CustomizeHearthling:set_hearthling_name(name)
 end
 
 function CustomizeHearthling:next_role(increment)
-   local new_role_ind = homf.util.rotate_table_index(self._role_ind, self._roles, increment)
+   local new_role_ind =
+      homf.util.rotate_table_index(self._role_ind, self._roles, increment)
    return self:randomize_hearthling(nil, nil, new_role_ind)
 end
 
@@ -358,7 +384,8 @@ function CustomizeHearthling:next_material_map(mat_name, increment)
    local mat_table = self._mats[role_key][gender][mat_name]
 
    local old_mat_index = self._indexes[mat_name]
-   local new_mat_index = homf.util.rotate_table_index(self._indexes[mat_name], mat_table, increment)
+   local new_mat_index =
+      homf.util.rotate_table_index(self._indexes[mat_name], mat_table, increment)
 
    return self:_switch_material_maps(mat_name, old_mat_index, new_mat_index, mat_table)
 end
@@ -370,9 +397,11 @@ function CustomizeHearthling:next_model(model_name, increment)
    local model_table = self._models[role_key][gender][model_name]
 
    local old_model_index = self._indexes[model_name]
-   local new_model_index = homf.util.rotate_table_index(self._indexes[model_name], model_table, increment)
+   local new_model_index =
+      homf.util.rotate_table_index(self._indexes[model_name], model_table, increment)
 
-   local new_model = self:_switch_models(model_name, old_model_index, new_model_index, model_table)
+   local new_model =
+      self:_switch_models(model_name, old_model_index, new_model_index, model_table)
    self:_update_models()
 
    return new_model
@@ -492,7 +521,8 @@ function CustomizeHearthling:_random_name()
    local given_names = self._data.roles[role_key][gender].given_names
    local surnames    = self._data.roles[role_key].surnames
 
-   return given_names[rng:get_int(1, #given_names)] ..' '.. surnames[rng:get_int(1, #surnames)]
+   return given_names[rng:get_int(1, #given_names)] ..' '..
+          surnames[rng:get_int(1, #surnames)]
 end
 
 function CustomizeHearthling:_is_open(locks, lock_name)
@@ -506,7 +536,8 @@ end
 function CustomizeHearthling:_get_name_from_model(model)
    -- We use the first word found in the model's name and get its corresponding key
    -- NOTE: The model key needs to have the key that was used when storing the key.
-   --       E.g. chops and various facial hair has the key 'facial_hair' rather than using its name as a basis.
+   --       E.g. chops and various facial hair has the key 'facial_hair'
+   --       rather than using its name as a basis.
 
    local model_filename_start = model:find('/[^/]*$') or 1
    return model:match('%a+', model_filename_start)
