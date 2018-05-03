@@ -1,4 +1,4 @@
-App.CustomizeHearthlingView = App.View.extend({
+App.HomfCustomizeHearthlingView = App.View.extend({
    templateName: 'customizeHearthling',
    classNames: ['flex', 'fullScreen'],
    closeOnEsc: true,

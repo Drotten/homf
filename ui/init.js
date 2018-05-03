@@ -34,13 +34,13 @@ $(top).on('stonehearthReady', function(cc) {
    });
 
    // The view will be added after the town name has been decided
-   App.gameView.views.complete.push('CustomizeHearthlingBGView');
+   App.gameView.views.complete.push('HomfCustomizeHearthlingBGView');
 
    App.stonehearthClient._homfCustomizeHearthling = null;
    App.stonehearthClient.showHomfCustomizer = function(hearthling, isMultiplayer) {
       // Toggle the hearthling customizer
       if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
-         this._homfCustomizeHearthling = App.gameView.addView(App.CustomizeHearthlingView);
+         this._homfCustomizeHearthling = App.gameView.addView(App.HomfCustomizeHearthlingView);
          this._homfCustomizeHearthling.startCustomization(hearthling, isMultiplayer);
       } else {
          this._homfCustomizeHearthling.destroy();
@@ -75,7 +75,7 @@ $(top).on('stonehearthReady', function(cc) {
    });
 });
 
-App.CustomizeHearthlingBGView = App.View.extend({
+App.HomfCustomizeHearthlingBGView = App.View.extend({
 
    init: function() {
       var self = this;
