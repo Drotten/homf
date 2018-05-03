@@ -1,6 +1,7 @@
 {
    "info": {
-      "name": "homf",
+      "name": "Hearthlings of Many Faces",
+      "namespace": "homf",
       "version": 3
    },
 
