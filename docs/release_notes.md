@@ -1,3 +1,10 @@
+### Version 1.1.5
+
+*Multiplayer*:
+- **Bug fix** - Clients cannot customize the host's hearthlings.
+- **Bug fix** - Clients can now customize their own newly arrived hearthlings.
+
+
 ### Version 1.1.4b
 
 - **Compatibility** - Updated for SH Alpha 22.
