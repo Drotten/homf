@@ -33,21 +33,6 @@ $(top).on('stonehearthReady', function(cc) {
       });
    });
 
-   // The view will be added after the town name has been decided
-   App.gameView.views.complete.push('HomfCustomizeHearthlingBGView');
-
-   App.stonehearthClient._homfCustomizeHearthling = null;
-   App.stonehearthClient.showHomfCustomizer = function(hearthling, isMultiplayer) {
-      // Toggle the hearthling customizer
-      if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
-         this._homfCustomizeHearthling = App.gameView.addView(App.HomfCustomizeHearthlingView);
-         this._homfCustomizeHearthling.startCustomization(hearthling, isMultiplayer);
-      } else {
-         this._homfCustomizeHearthling.destroy();
-         this._homfCustomizeHearthling = null;
-      }
-   };
-
 
    // Adds a console command that begins customization on a selected hearthling
 
@@ -75,10 +60,12 @@ $(top).on('stonehearthReady', function(cc) {
    });
 });
 
+
 App.HomfCustomizeHearthlingBGView = App.View.extend({
 
    init: function() {
       var self = this;
+      this._homfCustomizeHearthling = null;
       radiant.call('radiant:play_sound', {'track': 'stonehearth:sounds:ui:start_menu:submenu_select'});
 
       // Keep track of whenever a new hearthling joins a player's settlement
@@ -102,7 +89,8 @@ App.HomfCustomizeHearthlingBGView = App.View.extend({
          });
 
       // Keep track of whether we are in a multiplayer game
-      if (App.stonehearthClient.isHostPlayer()) {
+      if (App.stonehearthClient.isHostPlayer === "function") {
+         if (App.stonehearthClient.isHostPlayer()) {
          radiant.call('stonehearth:get_service', 'session_server')
             .done(function(response) {
                self._sessionTrace = new RadiantTrace(response.result)
@@ -112,13 +100,21 @@ App.HomfCustomizeHearthlingBGView = App.View.extend({
                      }
                      self.set('isMultiplayer', service.remote_connections_enabled);
                   });
-            });
-      } else {
-         this.set('isMultiplayer', true);
+               });
+         } else {
+            this.set('isMultiplayer', true);
+         }
       }
    },
 
    _startCustomization: function(hearthling) {
-      App.stonehearthClient.showHomfCustomizer(hearthling, this.get('isMultiplayer'));
+      // Toggle the hearthling customizer window
+      if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
+         this._homfCustomizeHearthling = App.gameView.addView(App.HomfCustomizeHearthlingView);
+         this._homfCustomizeHearthling.startCustomization(hearthling, this.get('isMultiplayer'));
+      } else {
+         this._homfCustomizeHearthling.destroy();
+         this._homfCustomizeHearthling = null;
+      }
    }
 });
