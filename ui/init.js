@@ -33,6 +33,9 @@ $(top).on('stonehearthReady', function(cc) {
       });
    });
 
+   // Adding the background view which initiates a customizer window for the hearthlings
+   App.gameView.views.complete.push("HomfCustomizeHearthlingBGView");
+
 
    // Adds a console command that begins customization on a selected hearthling
 
@@ -65,8 +68,7 @@ App.HomfCustomizeHearthlingBGView = App.View.extend({
 
    init: function() {
       var self = this;
-      this._homfCustomizeHearthling = null;
-      radiant.call('radiant:play_sound', {'track': 'stonehearth:sounds:ui:start_menu:submenu_select'});
+      this._customizerWindow = null;
 
       // Keep track of whenever a new hearthling joins a player's settlement
       radiant.call('homf:add_customizer')
@@ -91,16 +93,16 @@ App.HomfCustomizeHearthlingBGView = App.View.extend({
       // Keep track of whether we are in a multiplayer game
       if (App.stonehearthClient.isHostPlayer === "function") {
          if (App.stonehearthClient.isHostPlayer()) {
-         radiant.call('stonehearth:get_service', 'session_server')
-            .done(function(response) {
-               self._sessionTrace = new RadiantTrace(response.result)
-                  .progress(function (service) {
-                     if (self.isDestroying || self.isDestroyed) {
-                        return;
-                     }
-                     self.set('isMultiplayer', service.remote_connections_enabled);
+            radiant.call('stonehearth:get_service', 'session_server')
+               .done(function(response) {
+                  self._sessionTrace = new RadiantTrace(response.result)
+                     .progress(function (service) {
+                        if (self.isDestroying || self.isDestroyed) {
+                           return;
+                        }
+                        self.set('isMultiplayer', service.remote_connections_enabled);
+                     });
                   });
-               });
          } else {
             this.set('isMultiplayer', true);
          }
@@ -109,12 +111,12 @@ App.HomfCustomizeHearthlingBGView = App.View.extend({
 
    _startCustomization: function(hearthling) {
       // Toggle the hearthling customizer window
-      if (!this._homfCustomizeHearthling || this._homfCustomizeHearthling.isDestroyed) {
-         this._homfCustomizeHearthling = App.gameView.addView(App.HomfCustomizeHearthlingView);
-         this._homfCustomizeHearthling.startCustomization(hearthling, this.get('isMultiplayer'));
+      if (!this._customizerWindow || this._customizerWindow.isDestroyed) {
+         this._customizerWindow = App.gameView.addView(App.HomfCustomizeHearthlingView);
+         this._customizerWindow.startCustomization(hearthling, this.get('isMultiplayer'));
       } else {
-         this._homfCustomizeHearthling.destroy();
-         this._homfCustomizeHearthling = null;
+         this._customizerWindow.destroy();
+         this._customizerWindow = null;
       }
    }
 });
