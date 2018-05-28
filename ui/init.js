@@ -45,8 +45,8 @@ $(top).on('stonehearthReady', function(cc) {
    radiant.console.register('homf_custom', {
       call: function(cmdobjs, fn, args) {
          var entity;
-         if (args.length > 0)
-            entity = 'object://game/' + args[0];
+         if (args._.length > 0)
+            entity = 'object://game/' + args._[0];
          else
             entity = selected;
          return radiant.call('homf:force_start_customization', entity);
