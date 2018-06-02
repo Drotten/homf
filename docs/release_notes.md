@@ -1,3 +1,9 @@
+### Version 1.1.6
+
+*Localization*:
+- **Improvement** - All possible strings are now localized and can be translated easily.
+
+
 ### Version 1.1.5
 
 *Multiplayer*:
