@@ -95,9 +95,8 @@ App.HomfCustomizeHearthlingView = App.View.extend({
          var self = this;
          radiant.call('homf:next_model', key, isNext)
             .done(function(response) {
-               //TODO: get another kind of string (number? category name?)
-               var displayName = self._prettyString(response.model.name, {});
-               document.getElementById(key).innerHTML = displayName;
+               var modelName = response.model.name;
+               document.getElementById(key).innerHTML = self._localeString(modelName, {});
             });
       },
 
@@ -107,8 +106,8 @@ App.HomfCustomizeHearthlingView = App.View.extend({
          var self = this;
          radiant.call('homf:next_material_map', key, isNext)
             .done(function(response) {
-               var displayName = self._prettyString(response.material_map.name, {strip: '_material_map|skin_|hair_'});
-               document.getElementById(key).innerHTML = displayName;
+               var matName = response.material_map.name;
+               document.getElementById(key).innerHTML = self._localeString(matName, {strip: '_material_map|skin_|hair_'});
             });
       },
 
@@ -383,13 +382,13 @@ App.HomfCustomizeHearthlingView = App.View.extend({
       var new_map = {};
 
       $.each(map, function(id, val) {
-         displayKeyOptions = {
+         var displayKeyOptions = {
             prefix: options.displayKeyPrefix,
             postfix: options.displayKeyPostfix,
             strip: options.displayKeyStrip,
          };
 
-         displayNameOptions = {
+         var displayNameOptions = {
             prefix: options.displayNamePrefix,
             postfix: options.displayNamePostfix,
             strip: options.displayNameStrip,
@@ -399,13 +398,9 @@ App.HomfCustomizeHearthlingView = App.View.extend({
          if (locks[id])
             lockStatus = locks[id];
 
-         displayKey = i18n.t('stonehearth:ui.shell.select_roster.' + id);
-         if (displayKey === 'stonehearth:ui.shell.select_roster.' + id)
-            displayKey = self._prettyString(id, displayKeyOptions);
-
          new_map[id] = {
-            displayKey: displayKey,
-            displayName: self._prettyString(val.name, displayNameOptions),
+            displayKey: self._localeString(id, displayKeyOptions),
+            displayName: self._localeString(val.name, displayNameOptions),
             key: id,
             lockKey: id + 'Lock',
             lockStatus: lockStatus,
@@ -414,6 +409,14 @@ App.HomfCustomizeHearthlingView = App.View.extend({
       });
 
       return new_map;
+   },
+
+   _localeString: function(str, options) {
+      if (str === '[none]') str = 'none';
+      var locStr = i18n.t('stonehearth:ui.shell.select_roster.' + str);
+      if (locStr === 'stonehearth:ui.shell.select_roster.' + str)
+         locStr = this._prettyString(str, options);
+      return locStr;
    },
 
    _prettyString: function(str, options) {
