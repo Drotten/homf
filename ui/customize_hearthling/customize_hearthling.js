@@ -412,7 +412,6 @@ App.HomfCustomizeHearthlingView = App.View.extend({
    },
 
    _localeString: function(str, options) {
-      if (str === '[none]') str = 'none';
       var locStr = i18n.t('stonehearth:ui.shell.select_roster.' + str);
       if (locStr === 'stonehearth:ui.shell.select_roster.' + str)
          locStr = this._prettyString(str, options);
