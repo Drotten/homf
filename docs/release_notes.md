@@ -1,3 +1,8 @@
+### Version 1.1.6a
+
+- **Bug fix** - The customizer screen no longer shows when reloading the UI (when not customizing a hearthling).
+
+
 ### Version 1.1.6
 
 *Localization*:
