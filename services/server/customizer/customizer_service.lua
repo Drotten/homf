@@ -23,7 +23,7 @@ function CustomizerService:get_customizer(player_id)
 end
 
 function CustomizerService:get_tracker(player_id)
-   return self:get_customizer(player_id):get_tracker()
+   return self._sv.customizers[player_id]:get_tracker()
 end
 
 return CustomizerService
