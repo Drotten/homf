@@ -136,6 +136,8 @@ function Customizer:finish_customization()
 
    if #self._awaiting_customization > 0 then
       self:_init_customization()
+   else
+      self._tracker:set_data({})
    end
 end
 
