@@ -14,7 +14,7 @@ function CustomizerCallHandler:start_customization(session, response)
 end
 
 function CustomizerCallHandler:force_start_customization(session, response, entity)
-   -- Check to see if `entity` is an actual hearthling and that it belongs to the player
+   -- Check to see if `entity` belongs to the player, i.e., that the player has the right to customize it
    if radiant.entities.is_entity(entity) and radiant.entities.is_owned_by_player(entity, session.player_id) then
       local pop = stonehearth.population:get_population(session.player_id)
       if pop:is_citizen(entity) then
@@ -25,16 +25,16 @@ function CustomizerCallHandler:force_start_customization(session, response, enti
    return nil
 end
 
-function CustomizerCallHandler:randomize_hearthling(session, response, new_gender, locks)
-   return customizer:get_customizer(session.player_id):randomize_hearthling(new_gender, locks)
+function CustomizerCallHandler:randomize_entity(session, response, new_gender, locks)
+   return customizer:get_customizer(session.player_id):randomize_entity(new_gender, locks)
 end
 
-function CustomizerCallHandler:get_hearthling_name(session, response)
-   return { name = customizer:get_customizer(session.player_id):get_hearthling_name() }
+function CustomizerCallHandler:get_entity_name(session, response)
+   return { name = customizer:get_customizer(session.player_id):get_entity_name() }
 end
 
-function CustomizerCallHandler:set_hearthling_name(session, response, name)
-   customizer:get_customizer(session.player_id):set_hearthling_name(name)
+function CustomizerCallHandler:set_entity_name(session, response, name)
+   customizer:get_customizer(session.player_id):set_entity_name(name)
 end
 
 function CustomizerCallHandler:next_role(session, response, is_next)

@@ -1,10 +1,10 @@
-<script type="text/x-handlebars" data-template-name="customizeHearthling">
-   <div id="customizeHearthling" class="gui" style="display: block">
+<script type="text/x-handlebars" data-template-name="customizer">
+   <div id="customizer" class="gui" style="display: block">
       <div class="window">
-         <div class="title">{{i18n homf:ui.customize_hearthling.title}}</div>
+         <div class="title">{{i18n homf:ui.customizer.title}}</div>
 
          <div>
-            <div><input id="hearthlingName" type="text" onClick="this.select();" value="" /></div>
+            <div><input id="entityName" type="text" onClick="this.select();" value="" /></div>
             <div id="nameLock" class="unlocked" {{action "toggleLock" "nameLock" target=view}} />
          </div>
 

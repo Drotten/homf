@@ -11,9 +11,9 @@ $(top).on('stonehearthReady', function(cc) {
       if (customizeImmigrating == null)
          customizeImmigrating = true;
 
-      var zoomToHearthling = cfg['zoom_to_hearthling'];
-      if (zoomToHearthling == null)
-         zoomToHearthling = true;
+      var zoomToEntity = cfg['zoom_to_entity'];
+      if (zoomToEntity == null)
+         zoomToEntity = true;
 
       var pauseDuringCustomization = cfg['pause_during_customization'];
       if (pauseDuringCustomization == null)
@@ -28,16 +28,16 @@ $(top).on('stonehearthReady', function(cc) {
       radiant.call('radiant:set_config', 'mods.homf', {
          customize_embarking: customizeEmbarking,
          customize_immigrating: customizeImmigrating,
-         zoom_to_hearthling: zoomToHearthling,
+         zoom_to_entity: zoomToEntity,
          pause_during_customization: pauseDuringCustomization,
       });
    });
 
-   // Adding the background view which initiates a customizer window for the hearthlings
-   App.gameView.views.complete.push("HomfCustomizeHearthlingBGView");
+   // Adding the background view which initiates a customizer window for the entities
+   App.gameView.views.complete.push("HomfCustomizerBGView");
 
 
-   // Adds a console command that begins customization on a selected hearthling
+   // Adds a console command that begins customization on a selected entity
 
    var selected;
 
@@ -54,34 +54,34 @@ $(top).on('stonehearthReady', function(cc) {
             entity = selected;
          return radiant.call('homf:force_start_customization', entity);
       },
-      description: "Customizes a hearthling's looks. " +
-                   "Arg 0 is id of the hearthling. " +
+      description: "Customizes an entity's looks. " +
+                   "Arg 0 is id of the entity. " +
                    "If no argument is provided, customizes the " +
-                   "currently selected hearthling. " +
-                   "If the entity is not your own hearthling, " +
-                   "then nothing happens. Usage: homf_custom 12345"
+                   "currently selected entity. " +
+                   "If the entity is not your own: " +
+                   "nothing happens. Usage: homf_custom 12345"
    });
 });
 
 
-App.HomfCustomizeHearthlingBGView = App.View.extend({
+App.HomfCustomizerBGView = App.View.extend({
 
    init: function() {
       var self = this;
       this._customizerWindow = null;
 
-      // Keep track of whenever a new hearthling joins a player's settlement
+      // Keep track of whenever a new entity joins a player's settlement
       radiant.call('homf:add_customizer')
          .done(function(response) {
             radiant.call('homf:get_tracker')
                .done(function(response) {
                   self.trace = radiant.trace(response.tracker)
                      .progress(function(data) {
-                        var hearthling = data.hearthling;
+                        var entity = data.entity;
                         var player_id = data.player_id;
-                        // The hearthling needs to belong to the current player
-                        if (hearthling && player_id && player_id == App.stonehearthClient.getPlayerId()) {
-                           self._startCustomization(hearthling);
+                        // The entity needs to belong to the current player
+                        if (entity && player_id && player_id == App.stonehearthClient.getPlayerId()) {
+                           self._startCustomization(entity);
                         }
                      })
                      .fail(function(e) {
@@ -109,11 +109,11 @@ App.HomfCustomizeHearthlingBGView = App.View.extend({
       }
    },
 
-   _startCustomization: function(hearthling) {
-      // Toggle the hearthling customizer window
+   _startCustomization: function(entity) {
+      // Toggle the entity customizer window
       if (!this._customizerWindow || this._customizerWindow.isDestroyed) {
-         this._customizerWindow = App.gameView.addView(App.HomfCustomizeHearthlingView);
-         this._customizerWindow.startCustomization(hearthling, this.get('isMultiplayer'));
+         this._customizerWindow = App.gameView.addView(App.HomfCustomizerView);
+         this._customizerWindow.startCustomization(entity, this.get('isMultiplayer'));
       } else {
          this._customizerWindow.destroy();
          this._customizerWindow = null;

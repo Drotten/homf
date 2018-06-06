@@ -29,15 +29,15 @@
          "controller": "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"  : "server"
       },
-      "randomize_hearthling": {
+      "randomize_entity": {
          "controller": "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"  : "server"
       },
-      "get_hearthling_name": {
+      "get_entity_name": {
          "controller": "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"  : "server"
       },
-      "set_hearthling_name": {
+      "set_entity_name": {
          "controller": "file(call_handlers/customizer_call_handler.lua)",
          "endpoint"  : "server"
       },
@@ -58,23 +58,23 @@
          "endpoint"  : "server"
       },
 
-      "move_to_hearthling": {
-         "controller": "file(call_handlers/hearthling_camera_call_handler.lua)",
+      "move_to_entity": {
+         "controller": "file(call_handlers/camera_call_handler.lua)",
          "endpoint"  : "client"
       },
-      "follow_hearthling": {
-         "controller": "file(call_handlers/hearthling_camera_call_handler.lua)",
+      "follow_entity": {
+         "controller": "file(call_handlers/camera_call_handler.lua)",
          "endpoint"  : "client"
       },
       "stop_follow": {
-         "controller": "file(call_handlers/hearthling_camera_call_handler.lua)",
+         "controller": "file(call_handlers/camera_call_handler.lua)",
          "endpoint"  : "client"
       }
    },
 
    "controllers": {
       "customizer": "file(services/server/customizer/customizer.lua)",
-      "customizer:customize_hearthling": "file(services/server/customizer/customize_hearthling.lua)"
+      "customizer:controller": "file(services/server/customizer/customizer_controller.lua)"
    },
 
    "client_controllers": {
@@ -84,13 +84,13 @@
    "ui": {
       "js": [
          "file(ui/init.js)",
-         "file(ui/customize_hearthling/customize_hearthling.js)"
+         "file(ui/customizer/customizer.js)"
       ],
       "html": [
-         "file(ui/customize_hearthling/customize_hearthling.html)"
+         "file(ui/customizer/customizer.html)"
       ],
       "less": [
-         "file(ui/customize_hearthling/customize_hearthling.less)"
+         "file(ui/customizer/customizer.less)"
       ]
    }
 }

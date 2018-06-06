@@ -5,10 +5,10 @@ function Customizer:initialize()
    self._awaiting_customization = {}
    self._tracker = radiant.create_datastore()
    self._customizer_controller =
-      radiant.create_controller('homf:customizer:customize_hearthling')
+      radiant.create_controller('homf:customizer:controller')
 
-   self._sv.customized_hearthlings = {}
-   self._sv.customizing_hearthling = nil
+   self._sv.customized_entities = {}
+   self._sv.customizing_entity = nil
    self._sv.player_id = nil
 end
 
@@ -18,9 +18,9 @@ function Customizer:create(player_id)
 end
 
 function Customizer:activate()
-   if self._sv.customizing_hearthling then
+   if self._sv.customizing_entity then
       self._continue = true
-      self:_customize_next_hearthling(self._sv.customizing_hearthling)
+      self:_customize_next_entity(self._sv.customizing_entity)
    end
 end
 
@@ -33,14 +33,14 @@ end
 function Customizer:_setup_customizer()
    local pop = stonehearth.population:get_population(self._sv.player_id)
    local customize = radiant.util.get_config('customize_embarking', false)
-                  or next(self._sv.customized_hearthlings) ~= nil
+                  or next(self._sv.customized_entities) ~= nil
    local citizens = pop:get_citizens()
-   local customized_hearthlings = self._sv.customized_hearthlings
+   local customized_entities = self._sv.customized_entities
    for _, citizen in citizens:each() do
-      if customize and citizen ~= self._sv.customizing_hearthling then
+      if customize and citizen ~= self._sv.customizing_entity then
          self:try_customization(citizen)
       else
-         table.insert(customized_hearthlings, citizen:get_id())
+         table.insert(customized_entities, citizen:get_id())
       end
    end
 
@@ -55,60 +55,60 @@ function Customizer:_on_citizen_added(args)
    if radiant.util.get_config('customize_immigrating', true) then
       self:force_customization(citizen)
    else
-      table.insert(self._sv.customized_hearthlings, citizen:get_id())
+      table.insert(self._sv.customized_entities, citizen:get_id())
       self.__saved_variables:mark_changed()
    end
 end
 
 function Customizer:_on_citizen_removed(args)
-   table.remove(self._sv.customized_hearthlings, args.entity_id)
+   table.remove(self._sv.customized_entities, args.entity_id)
    self.__saved_variables:mark_changed()
 end
 
-function Customizer:_customize_next_hearthling(hearthling)
+function Customizer:_customize_next_entity(entity)
    local player_id = self._sv.player_id
-   self._tracker:set_data({ hearthling = hearthling, player_id = player_id })
+   self._tracker:set_data({ entity = entity, player_id = player_id })
 end
 
 function Customizer:get_tracker()
    return self._tracker
 end
 
-function Customizer:try_customization(hearthling)
-   local hearthling_id = hearthling:get_id()
-   for _, customized_hearthling in pairs(self._sv.customized_hearthlings) do
-      if hearthling_id == customized_hearthling then
+function Customizer:try_customization(entity)
+   local entity_id = entity:get_id()
+   for _, customized_entity in pairs(self._sv.customized_entities) do
+      if entity_id == customized_entity then
          return false
       end
    end
 
-   table.insert(self._awaiting_customization, hearthling)
+   table.insert(self._awaiting_customization, entity)
    self:_init_customization()
    return true
 end
 
-function Customizer:force_customization(hearthling)
-   table.insert(self._awaiting_customization, hearthling)
+function Customizer:force_customization(entity)
+   table.insert(self._awaiting_customization, entity)
    self:_init_customization()
 end
 
 function Customizer:start_customization()
-   local hearthling_data = self._customizer_controller
-      :start_customization(self._sv.customizing_hearthling, self._continue)
+   local entity_data = self._customizer_controller
+      :start_customization(self._sv.customizing_entity, self._continue)
    self._continue = false
-   return hearthling_data
+   return entity_data
 end
 
-function Customizer:randomize_hearthling(new_gender, locks)
-   return self._customizer_controller:randomize_hearthling(new_gender, locks)
+function Customizer:randomize_entity(new_gender, locks)
+   return self._customizer_controller:randomize_entity(new_gender, locks)
 end
 
-function Customizer:get_hearthling_name()
-   return self._customizer_controller:get_hearthling_name()
+function Customizer:get_entity_name()
+   return self._customizer_controller:get_entity_name()
 end
 
-function Customizer:set_hearthling_name(name)
-   self._customizer_controller:set_hearthling_name(name)
+function Customizer:set_entity_name(name)
+   self._customizer_controller:set_entity_name(name)
 end
 
 function Customizer:next_role(is_next)
@@ -124,14 +124,14 @@ function Customizer:next_model(model_name, is_next)
 end
 
 function Customizer:finish_customization()
-   assert(self._sv.customizing_hearthling, 'HoMF: Failed to finish customization')
+   assert(self._sv.customizing_entity, 'HoMF: Failed to finish customization')
 
    -- Post customization
-   local hearthling_id = self._sv.customizing_hearthling:get_id()
-   if not homf.util.contains(self._sv.customized_hearthlings, hearthling_id) then
-      table.insert(self._sv.customized_hearthlings, hearthling_id)
+   local entity_id = self._sv.customizing_entity:get_id()
+   if not homf.util.contains(self._sv.customized_entities, entity_id) then
+      table.insert(self._sv.customized_entities, entity_id)
    end
-   self._sv.customizing_hearthling = nil
+   self._sv.customizing_entity = nil
    self.__saved_variables:mark_changed()
 
    if #self._awaiting_customization > 0 then
@@ -140,15 +140,15 @@ function Customizer:finish_customization()
 end
 
 function Customizer:_init_customization()
-   if self._sv.customizing_hearthling then
+   if self._sv.customizing_entity then
       return
    end
 
    -- Pre customization setup
-   self._sv.customizing_hearthling = table.remove(self._awaiting_customization)
+   self._sv.customizing_entity = table.remove(self._awaiting_customization)
    self.__saved_variables:mark_changed()
 
-   self:_customize_next_hearthling(self._sv.customizing_hearthling)
+   self:_customize_next_entity(self._sv.customizing_entity)
 end
 
 return Customizer

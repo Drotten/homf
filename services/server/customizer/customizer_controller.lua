@@ -1,6 +1,6 @@
 local rng = _radiant.math.get_default_rng()
 
-local CustomizeHearthling = class()
+local CustomizerController = class()
 
 -- Copied from Stonehearth's customization_service.lua
 local CUSTOMIZATION = {
@@ -17,38 +17,38 @@ local GENDER = {
    FEMALE = 'female',
 }
 
-function CustomizeHearthling:activate()
+function CustomizerController:activate()
    self._log = radiant.log.create_logger('customizer')
 end
 
-function CustomizeHearthling:start_customization(customizing_hearthling, continue)
-   -- Load all data concerning the hearthling's models if we haven't already
+function CustomizerController:start_customization(entity, continue)
+   -- Load all data concerning the entity's models if we haven't already
    if not self._data then
       self._roles = {}
       self._mats = {}
       self._models = {}
 
-      local pop = stonehearth.population:get_population(customizing_hearthling)
+      local pop = stonehearth.population:get_population(entity)
       self._data = self:_load_faction_data(pop:get_kingdom())
       self:_setup_customization_options_data(self._data)
       self:_complement_gender_data(self._models)
       self:_complement_gender_data(self._mats)
    end
 
-   self._customizing_hearthling = customizing_hearthling
-   self._model_variants = customizing_hearthling
+   self._customizing_entity = entity
+   self._model_variants = entity
       :get_component('model_variants'):get_variant('default')
-   self._render_info = customizing_hearthling:get_component('render_info')
+   self._render_info = entity:get_component('render_info')
 
    assert(self._model_variants, 'HoMF: model_variants component not found')
    assert(self._render_info, 'HoMF: render_info component not found')
 
-   local hearthling_values = {}
+   local entity_values = {}
    local role_key
    local gender
 
    -- Get current gender
-   gender = customizing_hearthling:get_component('render_info'):get_model_variant()
+   gender = entity:get_component('render_info'):get_model_variant()
    if gender ~= GENDER.FEMALE then
       gender = GENDER.MALE
    end
@@ -64,27 +64,27 @@ function CustomizeHearthling:start_customization(customizing_hearthling, continu
    self._indexes = {}
 
    -- Find out which models and material maps are in use
-   self:_find_hearthling_models_and_mats()
+   self:_find_entity_models_and_mats()
 
-   hearthling_values.material_maps = {}
+   entity_values.material_maps = {}
    for mat_key, mat_table in pairs(self._mats[role_key][gender]) do
-      hearthling_values.material_maps[mat_key] = mat_table[ self._indexes[mat_key] ]
+      entity_values.material_maps[mat_key] = mat_table[ self._indexes[mat_key] ]
    end
 
-   hearthling_values.models = {}
+   entity_values.models = {}
    for model_key, model_table in pairs(self._models[role_key][gender]) do
-      hearthling_values.models[model_key] = model_table[ self._indexes[model_key] ]
+      entity_values.models[model_key] = model_table[ self._indexes[model_key] ]
    end
 
-   hearthling_values.name   = self:get_hearthling_name()
-   hearthling_values.gender = gender
-   hearthling_values.role   = role_key
-   hearthling_values.sizes  = self:_get_table_sizes()
+   entity_values.name   = self:get_entity_name()
+   entity_values.gender = gender
+   entity_values.role   = role_key
+   entity_values.sizes  = self:_get_table_sizes()
 
-   return hearthling_values
+   return entity_values
 end
 
-function CustomizeHearthling:_load_faction_data(faction_uri)
+function CustomizerController:_load_faction_data(faction_uri)
    local data = radiant.resources.load_json(faction_uri, false)
 
    -- Remove all duplicate values among the entities' uris.
@@ -103,7 +103,7 @@ end
 
 -- Get data from customization index (male and female) such as customization categories (head_hair, skin_color)
 -- and styles data (material map and model file paths for each subcategory).
-function CustomizeHearthling:_setup_customization_options_data(data)
+function CustomizerController:_setup_customization_options_data(data)
    local genders = { GENDER.MALE, GENDER.FEMALE }
    local variant_options_processed = {}
 
@@ -114,8 +114,8 @@ function CustomizeHearthling:_setup_customization_options_data(data)
          end
 
          for _, entities_uri in pairs(role_data[gender].uri) do
-            local hearthling_json = radiant.resources.load_json(entities_uri)
-            local all_variants = hearthling_json.entity_data['stonehearth:customization_variants']
+            local entity_json = radiant.resources.load_json(entities_uri)
+            local all_variants = entity_json.entity_data['stonehearth:customization_variants']
             if not all_variants then
                self._log:info('\'%s\' has no customization variants',
                   tostring(entities_uri))
@@ -142,7 +142,7 @@ function CustomizeHearthling:_setup_customization_options_data(data)
             local models = {}
 
             -- Get all the material maps and models used by
-            -- our hearthling's faction
+            -- our entity's faction
             for category, cat_data in pairs(options.styles) do
                for key, value in pairs(cat_data.values) do
                   if cat_data.type == CUSTOMIZATION.MATERIAL_MAP then
@@ -165,7 +165,7 @@ function CustomizeHearthling:_setup_customization_options_data(data)
 
             -- Get the models from the 'model_variants' component
             local entity_default_models =
-               hearthling_json.components.model_variants.default.models
+               entity_json.components.model_variants.default.models
             for _, model in pairs(entity_default_models) do
                local model_name = self:_get_name_from_model(model)
                if not models[model_name] then
@@ -202,7 +202,7 @@ function CustomizeHearthling:_setup_customization_options_data(data)
    end
 end
 
-function CustomizeHearthling:_complement_gender_data(data)
+function CustomizerController:_complement_gender_data(data)
    for _, role_models in pairs(data) do
       for model, _ in pairs(role_models.male) do
          if not role_models.female[model] then
@@ -217,12 +217,12 @@ function CustomizeHearthling:_complement_gender_data(data)
    end
 end
 
-function CustomizeHearthling:_find_hearthling_models_and_mats()
+function CustomizerController:_find_entity_models_and_mats()
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
    self._log:spam('finding models and material maps used by %s',
-      tostring(self._customizing_hearthling))
+      tostring(self._customizing_entity))
 
    -- Get the material maps used
    self._render_info:trace_material_maps('getting attached material maps')
@@ -268,7 +268,7 @@ function CustomizeHearthling:_find_hearthling_models_and_mats()
    end
 end
 
-function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_ind)
+function CustomizerController:randomize_entity(new_gender, locks, new_role_ind)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
    local switch_mats_data = {}
@@ -361,23 +361,23 @@ function CustomizeHearthling:randomize_hearthling(new_gender, locks, new_role_in
    }
 end
 
-function CustomizeHearthling:get_hearthling_name()
-   return radiant.entities.get_custom_name(self._customizing_hearthling)
+function CustomizerController:get_entity_name()
+   return radiant.entities.get_custom_name(self._customizing_entity)
 end
 
-function CustomizeHearthling:set_hearthling_name(name)
+function CustomizerController:set_entity_name(name)
    if type(name) == "string" then
-      radiant.entities.set_custom_name(self._customizing_hearthling, name)
+      radiant.entities.set_custom_name(self._customizing_entity, name)
    end
 end
 
-function CustomizeHearthling:next_role(increment)
+function CustomizerController:next_role(increment)
    local new_role_ind =
       homf.util.rotate_table_index(self._role_ind, self._roles, increment)
-   return self:randomize_hearthling(nil, nil, new_role_ind)
+   return self:randomize_entity(nil, nil, new_role_ind)
 end
 
-function CustomizeHearthling:next_material_map(mat_name, increment)
+function CustomizerController:next_material_map(mat_name, increment)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
@@ -390,7 +390,7 @@ function CustomizeHearthling:next_material_map(mat_name, increment)
    return self:_switch_material_maps(mat_name, old_mat_index, new_mat_index, mat_table)
 end
 
-function CustomizeHearthling:next_model(model_name, increment)
+function CustomizerController:next_model(model_name, increment)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
@@ -407,7 +407,7 @@ function CustomizeHearthling:next_model(model_name, increment)
    return new_model
 end
 
-function CustomizeHearthling:get_current_data()
+function CustomizerController:get_current_data()
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
@@ -424,7 +424,7 @@ function CustomizeHearthling:get_current_data()
    return current_mats, current_models, self._roles[role_key]
 end
 
-function CustomizeHearthling:_get_random_gender(locks)
+function CustomizerController:_get_random_gender(locks)
    local new_gender = self._gender
 
    if self:_is_open(locks, 'gender') then
@@ -438,7 +438,7 @@ function CustomizeHearthling:_get_random_gender(locks)
    return new_gender
 end
 
-function CustomizeHearthling:_switch_material_maps(mat_key, from_mat_index, to_mat_index, from_mat_map, to_mat_map)
+function CustomizerController:_switch_material_maps(mat_key, from_mat_index, to_mat_index, from_mat_map, to_mat_map)
    if not to_mat_map then
       to_mat_map = from_mat_map
    end
@@ -457,21 +457,21 @@ function CustomizeHearthling:_switch_material_maps(mat_key, from_mat_index, to_m
    return new_mat_map
 end
 
-function CustomizeHearthling:_add_material_map(material_map)
+function CustomizerController:_add_material_map(material_map)
    if self:_is_valid_style(material_map) then
       self._log:detail('adding material map %s', material_map)
       self._render_info:add_material_map(material_map)
    end
 end
 
-function CustomizeHearthling:_remove_material_map(material_map)
+function CustomizerController:_remove_material_map(material_map)
    if self:_is_valid_style(material_map) then
       self._log:detail('removing material map %s', material_map)
       self._render_info:remove_material_map(material_map)
    end
 end
 
-function CustomizeHearthling:_switch_models(model_key, from_model_index, to_model_index, from_model_table, to_model_table)
+function CustomizerController:_switch_models(model_key, from_model_index, to_model_index, from_model_table, to_model_table)
    if not to_model_table then
       to_model_table = from_model_table
    end
@@ -490,21 +490,21 @@ function CustomizeHearthling:_switch_models(model_key, from_model_index, to_mode
    return new_model
 end
 
-function CustomizeHearthling:_add_model(model)
+function CustomizerController:_add_model(model)
    if self:_is_valid_style(model) then
       self._log:detail('adding model %s', model)
       self._model_variants:add_model(model)
    end
 end
 
-function CustomizeHearthling:_remove_model(model)
+function CustomizerController:_remove_model(model)
    if self:_is_valid_style(model) then
       self._log:detail('removing model %s', model)
       self._model_variants:remove_model(model)
    end
 end
 
-function CustomizeHearthling:_update_models()
+function CustomizerController:_update_models()
    -- Set the model variant to its default/female variant
    -- which will force the engine to display the new model
    local variant = ''
@@ -514,7 +514,7 @@ function CustomizeHearthling:_update_models()
    self._render_info:set_model_variant(variant)
 end
 
-function CustomizeHearthling:_random_name()
+function CustomizerController:_random_name()
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
@@ -525,15 +525,15 @@ function CustomizeHearthling:_random_name()
           surnames[rng:get_int(1, #surnames)]
 end
 
-function CustomizeHearthling:_is_open(locks, lock_name)
+function CustomizerController:_is_open(locks, lock_name)
    return not locks or not locks[lock_name] or locks[lock_name] == 'unlocked'
 end
 
-function CustomizeHearthling:_is_valid_style(style)
+function CustomizerController:_is_valid_style(style)
    return style ~= nil and style ~= CUSTOMIZATION.NONE and style ~= ''
 end
 
-function CustomizeHearthling:_get_name_from_model(model)
+function CustomizerController:_get_name_from_model(model)
    -- We use the first word found in the model's name and get its corresponding key
    -- NOTE: The model key needs to have the key that was used when storing the key.
    --       E.g. chops and various facial hair has the key 'facial_hair'
@@ -543,7 +543,7 @@ function CustomizeHearthling:_get_name_from_model(model)
    return model:match('%a+', model_filename_start)
 end
 
-function CustomizeHearthling:_find_key_from_model(model)
+function CustomizerController:_find_key_from_model(model)
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
 
@@ -558,7 +558,7 @@ function CustomizeHearthling:_find_key_from_model(model)
    return ''
 end
 
-function CustomizeHearthling:_get_table_sizes()
+function CustomizerController:_get_table_sizes()
    local role_key = self._roles[self._role_ind]
    local gender   = self._gender
    local sizes = {}
@@ -576,4 +576,4 @@ function CustomizeHearthling:_get_table_sizes()
    return sizes
 end
 
-return CustomizeHearthling
+return CustomizerController

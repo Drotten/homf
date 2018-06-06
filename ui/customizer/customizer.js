@@ -1,5 +1,5 @@
-App.HomfCustomizeHearthlingView = App.View.extend({
-   templateName: 'customizeHearthling',
+App.HomfCustomizerView = App.View.extend({
+   templateName: 'customizer',
    classNames: ['flex', 'fullScreen'],
    closeOnEsc: true,
 
@@ -13,7 +13,7 @@ App.HomfCustomizeHearthlingView = App.View.extend({
    init: function() {
       this._super();
       this._pause_during_customization = true;
-      this._zoom_to_hearthling = true;
+      this._zoom_to_entity = true;
       var self = this;
 
       radiant.call('radiant:get_config', 'mods.homf')
@@ -24,9 +24,9 @@ App.HomfCustomizeHearthlingView = App.View.extend({
             if (self._pause_during_customization == null)
                self._pause_during_customization = true;
 
-            self._zoom_to_hearthling = cfg['zoom_to_hearthling'];
-            if (self._zoom_to_hearthling == null)
-               self._zoom_to_hearthling = true;
+            self._zoom_to_entity = cfg['zoom_to_entity'];
+            if (self._zoom_to_entity == null)
+               self._zoom_to_entity = true;
          });
    },
 
@@ -34,22 +34,22 @@ App.HomfCustomizeHearthlingView = App.View.extend({
       this._super();
       var self = this;
 
-      this.$('#hearthlingName').keydown(function(e) {
+      this.$('#entityName').keydown(function(e) {
          // Backspace - remove the last character in the name
          if (e.keyCode == 8) {
-            var newName = self.$('#hearthlingName').val();
+            var newName = self.$('#entityName').val();
             newName = newName.substring(0, newName.length-1);
-            radiant.call('homf:set_hearthling_name', newName);
+            radiant.call('homf:set_entity_name', newName);
          }
          // Enter - deselect the input text
          else if (e.keyCode == 13) {
-            self.$('#hearthlingName').blur();
+            self.$('#entityName').blur();
          }
       });
 
-      this.$('#hearthlingName').keypress(function(e) {
-         var newName = self.$('#hearthlingName').val() + String.fromCharCode(e.keyCode);
-         radiant.call('homf:set_hearthling_name', newName);
+      this.$('#entityName').keypress(function(e) {
+         var newName = self.$('#entityName').val() + String.fromCharCode(e.keyCode);
+         radiant.call('homf:set_entity_name', newName);
       });
 
       this.$('.ok').click(function() {
@@ -62,12 +62,12 @@ App.HomfCustomizeHearthlingView = App.View.extend({
    actions: {
       randomize: function() {
          radiant.call('radiant:play_sound', {'track': 'stonehearth:sounds:ui:start_menu:reroll'});
-         this._randomizeHearthling(null);
+         this._randomizeEntity(null);
       },
 
       setGender: function(gender) {
          radiant.call('radiant:play_sound', {'track': 'stonehearth:sounds:ui:start_menu:submenu_select'});
-         this._randomizeHearthling(gender);
+         this._randomizeEntity(gender);
          if (gender == 'male') {
             self.$('#maleButton').addClass('selected');
             self.$('#femaleButton').removeClass('selected');
@@ -85,7 +85,7 @@ App.HomfCustomizeHearthlingView = App.View.extend({
          radiant.call('homf:next_role', isNext)
             .done(function(response) {
                self._resetLocks(2);
-               self._processHearthlingData(response);
+               self._processEntityData(response);
             });
       },
 
@@ -117,7 +117,7 @@ App.HomfCustomizeHearthlingView = App.View.extend({
    },
 
    destroy: function() {
-      if (this._hearthling) {
+      if (this._entity) {
          radiant.call('radiant:play_sound', {'track': 'stonehearth:sounds:ui:start_menu:trigger_click'});
 
          radiant.call('homf:finish_customization');
@@ -125,22 +125,20 @@ App.HomfCustomizeHearthlingView = App.View.extend({
             radiant.call('stonehearth:dm_resume_game');
       }
 
-      this._hearthling = null;
+      this._entity = null;
       this._super();
    },
 
-   startCustomization: function(hearthling, isMultiplayer) {
-      if (hearthling != null) {
+   startCustomization: function(entity, isMultiplayer) {
+      if (entity != null) {
          this.set('isMultiplayer', isMultiplayer);
          var self = this;
 
-         this._hearthling = hearthling;
+         this._entity = entity;
 
          radiant.call('homf:start_customization')
             .done(function(response) {
-               // radiant.call('radiant:play_sound', {'track': 'stonehearth:sounds:ui:start_menu:reroll'});
-
-               self.$('#hearthlingName').val(response.name);
+               self.$('#entityName').val(response.name);
 
                if (response.gender == 'male')
                   self.$('#maleButton').addClass('selected');
@@ -164,8 +162,8 @@ App.HomfCustomizeHearthlingView = App.View.extend({
 
                self._setupLocks([ models, material_maps ]);
 
-               if (self._zoom_to_hearthling)
-                  radiant.call('homf:move_to_hearthling', hearthling);
+               if (self._zoom_to_entity)
+                  radiant.call('homf:move_to_entity', entity);
                if (self._pause_during_customization && !self.get('isMultiplayer'))
                   radiant.call('stonehearth:dm_pause_game');
             });
@@ -175,29 +173,29 @@ App.HomfCustomizeHearthlingView = App.View.extend({
       }
    },
 
-   _randomizeHearthling: function(newGender) {
+   _randomizeEntity: function(newGender) {
       var self = this;
       var locks = null;
 
       if (newGender == null)
          locks = self._getLocks();
 
-      radiant.call('homf:randomize_hearthling', newGender, locks)
+      radiant.call('homf:randomize_entity', newGender, locks)
          .done(function(response) {
             if (newGender)
                self._resetLocks(3);
 
-            self._processHearthlingData(response, locks);
+            self._processEntityData(response, locks);
          });
    },
 
-   _processHearthlingData: function(data, locks) {
+   _processEntityData: function(data, locks) {
       if (!locks)
          locks = this._getLocks();
 
       if (data.name) {
-         this.$('#hearthlingName').val(data.name);
-         radiant.call('homf:set_hearthling_name', data.name);
+         this.$('#entityName').val(data.name);
+         radiant.call('homf:set_entity_name', data.name);
       }
 
       self.$('#femaleButton').removeClass('selected');
