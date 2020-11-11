@@ -27,7 +27,7 @@ end
 function Customizer:post_activate()
    self:_setup_customizer()
 
-   self._log:info('homf service up and running!')
+   self._log:info('homf customizer up and running for player %s', self._sv.player_id)
 end
 
 function Customizer:_setup_customizer()
